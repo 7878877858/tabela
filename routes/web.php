@@ -15,6 +15,27 @@ use App\Http\Controllers\{
 // Auth routes (Laravel Breeze/Fortify handles these)
 require __DIR__.'/auth.php';
 
+/*
+|--------------------------------------------------------------------------
+| Language Switch
+|--------------------------------------------------------------------------
+*/
+Route::get('/locale-test', function () {
+    return response()->json([
+        'session_locale' => session('locale'),
+        'app_locale' => app()->getLocale(),
+    ]);
+});
+Route::get('/language/{locale}', function ($locale) {
+
+    if (in_array($locale, ['gu', 'en', 'hi'])) {
+        session(['locale' => $locale]);
+    }
+
+    return redirect()->back();
+
+})->name('language.switch');
+
 // Protected routes
 Route::middleware('auth')->group(function () {
 

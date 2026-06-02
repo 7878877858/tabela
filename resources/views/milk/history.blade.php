@@ -1,18 +1,18 @@
 @extends('layouts.app')
-@section('title','દૂધ ઇતિહાસ')
+@section('title', __('milk.milk_history'))
 
 @section('content')
 
 <div class="page-header">
-    <h2>📋 દૂધ ઇતિહાસ</h2>
-    <a href="{{ route('milk.index') }}" class="btn btn-outline btn-sm">➕ એન્ટ્રી</a>
+    <h2>📋 {{ __('milk.milk_history') }}</h2>
+    <a href="{{ route('milk.index') }}" class="btn btn-outline btn-sm">➕ {{ __('milk.milk_entry') }}</a>
 </div>
 
 {{-- Filter --}}
 <div class="card" style="margin-bottom:16px; padding:14px 20px;">
     <form method="GET" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
         
-        <label>મહિનો:</label>
+        <label>{{ __('milk.month') }}:</label>
         <select name="month" onchange="this.form.submit()" class="form-control" style="width:120px;">
             @for($m=1;$m<=12;$m++)
                 <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>
@@ -21,12 +21,12 @@
             @endfor
         </select>
 
-        <label>વર્ષ:</label>
+        <label>{{ __('milk.year') }}:</label>
         <input type="number" name="year" value="{{ $year }}" 
             class="form-control" style="width:100px;" onchange="this.form.submit()">
 
         <span style="margin-left:auto; font-size:14px;">
-            કુલ દૂધ: 
+            {{ __('milk.total') }} {{ __('milk.milk') }}: 
             <strong style="color:var(--primary);">
                 {{ number_format($monthTotal,1) }} L
             </strong>
@@ -41,10 +41,10 @@
         <table>
             <thead>
                 <tr>
-                    <th>તારીખ</th>
-                    <th>સવાર (L)</th>
-                    <th>સાંજ (L)</th>
-                    <th>કુલ (L)</th>
+                    <th>{{ __('milk.date') }}</th>
+                    <th>{{ __('milk.morning') }} (L)</th>
+                    <th>{{ __('milk.evening') }} (L)</th>
+                    <th>{{ __('milk.total') }} (L)</th>
                 </tr>
             </thead>
             <tbody>
@@ -60,7 +60,7 @@
                 @empty
                 <tr>
                     <td colspan="4" style="text-align:center; padding:30px; color:#9ca3af;">
-                        કોઈ ડેટા નથી
+                        {{ __('milk.no_data') }}
                     </td>
                 </tr>
                 @endforelse

@@ -1,0 +1,21 @@
+<?php
+return [
+    'dashboard' => 'ડૅશબોર્ડ',
+    'buffalo' => 'ભેંસ',
+    'all_buffaloes' => 'બધી ભેંસો',
+    'add_buffalo' => 'નવી ભેંસ ઉમેરો',
+    'milk' => 'દૂધ',
+    'milk_entry' => 'દૂધ એન્ટ્રી',
+    'milk_history' => 'દૂધ ઇતિહાસ',
+    'milk_sales' => 'દૂધ વેચાણ',
+    'expense' => 'ખર્ચ',
+    'reports' => 'અહેવાલ',
+    'monthly_report' => 'માસિક અહેવાલ',
+    'yearly_report' => 'વાર્ષિક અહેવાલ',
+    'staff' => 'સ્ટાફ',
+    'employees' => 'કર્મચારીઓ',
+    'system' => 'સિસ્ટમ',
+    'settings' => 'સેટિંગ્સ',
+    'logout' => 'લૉગ આઉટ',
+    'management' => 'તબેલો મેનેજમેન્ટ',
+];

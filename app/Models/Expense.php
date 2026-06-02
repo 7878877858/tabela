@@ -11,18 +11,17 @@ class Expense extends Model
 
     public function buffalo() { return $this->belongsTo(Buffalo::class); }
 
-    public function getCategoryLabelAttribute(): string
-    {
-        return match($this->category) {
-            'feed'       => 'ચારો / ઘાસ',
-            'medicine'   => 'દવા',
-            'labour'     => 'મજૂરી',
-            'equipment'  => 'સાધન',
-            'veterinary' => 'પશુ ડૉક્ટર',
-            'other'      => 'અન્ય',
-            default      => $this->category,
-        };
-    }
+   public function getCategoryLabelAttribute()
+{
+    return match($this->category) {
+        'feed' => __('kharch.feed'),
+        'medicine' => __('kharch.medicine'),
+        'labour' => __('kharch.labour'),
+        'equipment' => __('kharch.equipment'),
+        'veterinary' => __('kharch.veterinary'),
+        default => __('kharch.other'),
+    };
+}
 }
 
 // ─────────────────────────────────────────────────

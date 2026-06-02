@@ -38,22 +38,23 @@ class Buffalo extends Model
     }
 
     public function getStatusLabelAttribute(): string
-    {
-        return match($this->status) {
-            'active' => 'સક્રિય',
-            'sold'   => 'વેચાઈ ગઈ',
-            'dead'   => 'મૃત',
-            default  => $this->status,
-        };
-    }
+{
+    return match($this->status) {
+        'active' => __('buffalo.active'),
+        'dry'    => __('buffalo.dry'),
+        'sold'   => __('buffalo.sold'),
+        'dead'   => __('buffalo.dead'),
+        default  => $this->status,
+    };
+}
 
-    public function getLactationLabelAttribute(): string
-    {
-        return match($this->lactation_status) {
-            'lactating' => 'દૂધ આપે છે',
-            'dry'       => 'સૂકી',
-            'pregnant'  => 'ગર્ભવતી',
-            default     => $this->lactation_status,
-        };
-    }
+public function getLactationLabelAttribute(): string
+{
+    return match($this->lactation_status) {
+        'lactating' => __('buffalo.lactating'),
+        'dry'       => __('buffalo.dry'),
+        'pregnant'  => __('buffalo.pregnant'),
+        default     => $this->lactation_status,
+    };
+}
 }

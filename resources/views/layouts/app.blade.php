@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ \App\Models\Setting::get('farm_name','મારો તબેલો') }} — @yield('title','ડૅશબોર્ડ')</title>
+   <title>{{ \App\Models\Setting::get('farm_name', __('settings.default_farm_name')) }}</title>
+   
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +13,7 @@
 
     @php
         $primary   = \App\Models\Setting::get('primary_color','#16a34a');
-        $farmName  = \App\Models\Setting::get('farm_name','મારો તબેલો');
+        $farmName = \App\Models\Setting::get('farm_name', __('settings.default_farm_name'));
         $currency  = \App\Models\Setting::get('currency','₹');
         // Darken primary by ~20% for hover
         function adjustColor($hex, $percent) {
@@ -136,64 +137,64 @@
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <h1>🐃 {{ $farmName }}</h1>
-        <p>તબેલો મેનેજમેન્ટ</p>
+        <p>{{ __('common.management') }}</p>
     </div>
     <nav>
         <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/></svg>
-            ડૅશબોર્ડ
+            {{ __('common.dashboard') }}
         </a>
 
-        <div class="nav-section">ભેંસ</div>
+        <div class="nav-section">{{ __('common.buffalo') }}</div>
         <a href="{{ route('buffalo.index') }}" class="nav-item {{ request()->routeIs('buffalo.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke-width="2"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke-width="2" stroke-linecap="round"/></svg>
-            બધી ભેંસો
+            {{ __('common.all_buffaloes') }}
         </a>
         <a href="{{ route('buffalo.create') }}" class="nav-item {{ request()->routeIs('buffalo.create') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2" stroke-linecap="round"/></svg>
-            નવી ભેંસ ઉમેરો
+            {{ __('common.add_buffalo') }}
         </a>
 
-        <div class="nav-section">દૂધ</div>
+        <div class="nav-section">{{ __('common.milk') }}</div>
         <a href="{{ route('milk.index') }}" class="nav-item {{ request()->routeIs('milk.index') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 3h6l1 4H8L9 3z" stroke-width="2"/><path d="M8 7v13a1 1 0 001 1h6a1 1 0 001-1V7" stroke-width="2"/></svg>
-            દૂધ એન્ટ્રી
+            {{ __('common.milk_entry') }}
         </a>
         <a href="{{ route('milk.history') }}" class="nav-item {{ request()->routeIs('milk.history') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-width="2"/></svg>
-            દૂધ ઇતિહાસ
+            {{ __('common.milk_history') }}
         </a>
         <a href="{{ route('sale.index') }}" class="nav-item {{ request()->routeIs('sale.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke-width="2"/></svg>
-            દૂધ વેચાણ
+            {{ __('common.milk_sales') }}
         </a>
 
-        <div class="nav-section">ખર્ચ</div>
+        <div class="nav-section">{{ __('common.expense') }}</div>
         <a href="{{ route('kharch.index') }}" class="nav-item {{ request()->routeIs('kharch.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 14l-4-4 4-4M15 10h-4m4 4H9m10-4v4" stroke-width="2" stroke-linecap="round"/></svg>
-            ખર્ચ
+            {{ __('common.expense') }}
         </a>
 
-        <div class="nav-section">અહેવાલ</div>
+        <div class="nav-section">{{ __('common.reports') }}</div>
         <a href="{{ route('reports.monthly') }}" class="nav-item {{ request()->routeIs('reports.monthly') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg>
-            માસિક અહેવાલ
+            {{ __('common.monthly_report') }}
         </a>
         <a href="{{ route('reports.yearly') }}" class="nav-item {{ request()->routeIs('reports.yearly') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 12l3-3 3 3 4-4" stroke-width="2" stroke-linecap="round"/><path d="M3 20h18M3 4h18" stroke-width="2"/></svg>
-            વાર્ષિક અહેવાલ
+            {{ __('common.yearly_report') }}
         </a>
 
-        <div class="nav-section">સ્ટાફ</div>
+        <div class="nav-section">{{ __('common.staff') }}</div>
         <a href="{{ route('employees.index') }}" class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m10-6A4 4 0 1112 4a4 4 0 015 3.87M7 8a4 4 0 118 0 4 4 0 01-8 0z" stroke-width="2"/></svg>
-            કર્મચારીઓ
+            {{ __('common.employees') }}
         </a>
 
-        <div class="nav-section">સિસ્ટમ</div>
+        <div class="nav-section">{{ __('common.system') }}</div>
         <a href="{{ route('settings.index') }}" class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke-width="2"/></svg>
-            સેટિંગ્સ
+            {{ __('common.settings') }}
         </a>
     </nav>
     <div class="sidebar-footer">
@@ -201,7 +202,7 @@
             @csrf
             <button type="submit" class="nav-item" style="width:100%; background:none; border:none; cursor:pointer;">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="2" stroke-linecap="round"/></svg>
-                લૉગ આઉટ
+                {{ __('common.logout') }}
             </button>
         </form>
     </div>
@@ -213,7 +214,7 @@
             <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2" stroke-linecap="round"/></svg>
             </button>
-            <h2>@yield('title','ડૅશબોર્ડ')</h2>
+            <h2>@yield('title', __('common.dashboard'))</h2>
         </div>
         <div style="font-size:13px; color:#6b7280;">
             {{ now()->format('d/m/Y') }} — {{ auth()->user()->name }}

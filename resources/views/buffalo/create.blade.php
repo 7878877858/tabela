@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', isset($buffalo) ? 'ભેંસ સુધારો' : 'નવી ભેંસ')
+@section('title', isset($buffalo) ? __('buffalo.edit_buffalo') : __('buffalo.new_buffalo'))
 
 @section('content')
 <div class="page-header">
-    <h2>{{ isset($buffalo) ? '✏️ ભેંસ સુધારો — '.$buffalo->tag_number : '➕ નવી ભેંસ ઉમેરો' }}</h2>
-    <a href="{{ route('buffalo.index') }}" class="btn btn-ghost btn-sm">← પાછા</a>
+    <h2>{{ isset($buffalo) ? '✏️ '.__('buffalo.edit_buffalo').' — '.$buffalo->tag_number : '➕ '.__('buffalo.new_buffalo') }}</h2>
+    <a href="{{ route('buffalo.index') }}" class="btn btn-ghost btn-sm">← {{ __('buffalo.back') }}</a>
 </div>
 
 <div class="card" style="max-width:640px;">
@@ -14,67 +14,72 @@
 
         <div class="grid-2">
             <div class="form-group">
-                <label class="form-label">ટેગ નંબર *</label>
+                <label class="form-label">{{ __('buffalo.tag_number') }} *</label>
                 <input type="text" name="tag_number" class="form-control"
                     value="{{ old('tag_number', $buffalo->tag_number ?? '') }}"
-                    placeholder="દા.ત. B001" required>
+                    placeholder="{{ __('buffalo.tag_number_placeholder') }}" required>
             </div>
             <div class="form-group">
-                <label class="form-label">નામ (ઐચ્છિક)</label>
+                <label class="form-label">{{ __('buffalo.optional_name') }}</label>
                 <input type="text" name="name" class="form-control"
-                    value="{{ old('name', $buffalo->name ?? '') }}" placeholder="દા.ત. ગૌરી">
+                    value="{{ old('name', $buffalo->name ?? '') }}" placeholder="{{ __('buffalo.name_placeholder') }}">
             </div>
         </div>
 
         <div class="grid-2">
             <div class="form-group">
-                <label class="form-label">સ્થિતિ</label>
+                <label class="form-label">{{ __('buffalo.status') }}</label>
                 <select name="status" class="form-control">
-                    @foreach(['active'=>'સક્રિય','dry'=>'સૂકી','sold'=>'વેચાઈ','dead'=>'મૃત'] as $v => $l)
+                    @foreach([
+                                'active' => __('buffalo.active'),
+                                'dry' => __('buffalo.dry'),
+                                'sold' => __('buffalo.sold'),
+                                'dead' => __('buffalo.dead')
+                            ] as $v => $l)
                     <option value="{{ $v }}" {{ old('status', $buffalo->status ?? 'active') === $v ? 'selected' : '' }}>{{ $l }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="form-group">
-                <label class="form-label">દૂધ સ્થિતિ</label>
+                <label class="form-label">{{ __('buffalo.milk_status') }}</label>
                 <select name="lactation_status" class="form-control">
-                    <option value="lactating" {{ old('lactation_status', $buffalo->lactation_status ?? '') === 'lactating' ? 'selected' : '' }}>🥛 દૂધ આપે</option>
-                    <option value="dry" {{ old('lactation_status', $buffalo->lactation_status ?? 'dry') === 'dry' ? 'selected' : '' }}>🌵 સૂકી</option>
-                    <option value="pregnant" {{ old('lactation_status', $buffalo->lactation_status ?? '') === 'pregnant' ? 'selected' : '' }}>🤰 ગર્ભવતી</option>
+                    <option value="lactating" {{ old('lactation_status', $buffalo->lactation_status ?? '') === 'lactating' ? 'selected' : '' }}>🥛 {{ __('buffalo.lactating') }}</option>
+                    <option value="dry" {{ old('lactation_status', $buffalo->lactation_status ?? 'dry') === 'dry' ? 'selected' : '' }}>🌵 {{ __('buffalo.dry') }}</option>
+                    <option value="pregnant" {{ old('lactation_status', $buffalo->lactation_status ?? '') === 'pregnant' ? 'selected' : '' }}>🤰 {{ __('buffalo.pregnant') }}</option>
                 </select>
             </div>
         </div>
 
         <div class="grid-2">
             <div class="form-group">
-                <label class="form-label">જન્મ તારીખ</label>
+                <label class="form-label">{{ __('buffalo.dob') }}</label>
                 <input type="date" name="dob" class="form-control"
                     value="{{ old('dob', isset($buffalo) ? $buffalo->dob?->format('Y-m-d') : '') }}">
             </div>
             <div class="form-group">
-                <label class="form-label">ખરીદ તારીખ</label>
+                <label class="form-label">{{ __('buffalo.purchase_date') }}</label>
                 <input type="date" name="purchase_date" class="form-control"
                     value="{{ old('purchase_date', isset($buffalo) ? $buffalo->purchase_date?->format('Y-m-d') : '') }}">
             </div>
         </div>
 
         <div class="form-group">
-            <label class="form-label">ખરીદ કિંમત (₹)</label>
+            <label class="form-label">{{ __('buffalo.purchase_price') }}</label>
             <input type="number" name="purchase_price" step="0.01" class="form-control"
                 value="{{ old('purchase_price', $buffalo->purchase_price ?? '') }}" placeholder="0.00">
         </div>
 
         <div class="form-group">
-            <label class="form-label">નોંધ</label>
+            <label class="form-label">{{ __('buffalo.notes') }}</label>
             <textarea name="notes" class="form-control" rows="3"
-                placeholder="ઐચ્છિક">{{ old('notes', $buffalo->notes ?? '') }}</textarea>
+                placeholder="{{ __('buffalo.notes_placeholder') }}">{{ old('notes', $buffalo->notes ?? '') }}</textarea>
         </div>
 
         <div style="display:flex; gap:10px;">
             <button type="submit" class="btn btn-primary">
-                {{ isset($buffalo) ? '💾 અપડેટ' : '➕ ઉમેરો' }}
+                {{ isset($buffalo) ? '💾 '.__('buffalo.update') : '➕ '.__('buffalo.save') }}
             </button>
-            <a href="{{ route('buffalo.index') }}" class="btn btn-ghost">રદ</a>
+            <a href="{{ route('buffalo.index') }}" class="btn btn-ghost">{{ __('buffalo.cancel') }}</a>
         </div>
     </form>
 </div>

@@ -1,51 +1,51 @@
 @extends('layouts.app')
-@section('title','ખર્ચ')
+@section('title', __('kharch.expense'))
 
 @section('content')
-<div class="page-header"><h2>💸 ખર્ચ</h2></div>
+<div class="page-header"><h2>💸 {{ __('kharch.expense') }}</h2></div>
 
 {{-- Add form --}}
 <div class="card" style="margin-bottom:20px;">
-    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">નવો ખર્ચ ઉમેરો</h3>
+    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">{{ __('kharch.add_expense') }}</h3>
     <form method="POST" action="{{ route('kharch.store') }}">
         @csrf
         <div class="grid-3">
             <div class="form-group">
-                <label class="form-label">તારીખ *</label>
+                <label class="form-label">{{ __('kharch.date') }} *</label>
                 <input type="date" name="expense_date" class="form-control" value="{{ today()->toDateString() }}" required>
             </div>
             <div class="form-group">
-                <label class="form-label">પ્રકાર *</label>
+                <label class="form-label">{{ __('kharch.category') }} *</label>
                 <select name="category" class="form-control" required>
-                    <option value="feed">🌾 ચારો / ઘાસ</option>
-                    <option value="medicine">💊 દવા</option>
-                    <option value="labour">👷 મજૂરી</option>
-                    <option value="equipment">🔧 સાધન</option>
-                    <option value="veterinary">🏥 પશુ ડૉક્ટર</option>
-                    <option value="other">📌 અન્ય</option>
+                    <option value="feed">🌾 {{ __('kharch.feed') }}</option>
+                    <option value="medicine">💊 {{ __('kharch.medicine') }}</option>
+                    <option value="labour">👷 {{ __('kharch.labour') }}</option>
+                    <option value="equipment">🔧 {{ __('kharch.equipment') }}</option>
+                    <option value="veterinary">🏥 {{ __('kharch.veterinary') }}</option>
+                    <option value="other">📌 {{ __('kharch.other') }}</option>
                 </select>
             </div>
             <div class="form-group">
-                <label class="form-label">ખર્ચ (₹) *</label>
+                <label class="form-label">{{ __('kharch.amount') }} *</label>
                 <input type="number" name="amount" step="0.01" min="0" class="form-control" placeholder="0.00" required>
             </div>
         </div>
         <div class="grid-2">
             <div class="form-group">
-                <label class="form-label">વર્ણન *</label>
-                <input type="text" name="description" class="form-control" placeholder="દા.ત. ૨૦ ગઠ્ઠા ઘઉં" required>
+                <label class="form-label">{{ __('kharch.description') }} *</label>
+                <input type="text" name="description" class="form-control" placeholder="{{ __('kharch.description_placeholder') }}" required>
             </div>
             <div class="form-group">
-                <label class="form-label">ભેંસ (ઐચ્છિક)</label>
+                <label class="form-label">{{ __('kharch.buffalo') }} ({{ __('kharch.optional') }})</label>
                 <select name="buffalo_id" class="form-control">
-                    <option value="">— બધા માટે —</option>
+                    <option value="">— {{ __('kharch.all_buffaloes') }} —</option>
                     @foreach($buffaloes as $b)
                     <option value="{{ $b->id }}">{{ $b->tag_number }}{{ $b->name ? ' — '.$b->name : '' }}</option>
                     @endforeach
                 </select>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">➕ ઉમેરો</button>
+        <button type="submit" class="btn btn-primary">➕ {{ __('kharch.add') }}</button>
     </form>
 </div>
 
@@ -54,7 +54,7 @@
     <select name="month" class="form-control" style="width:130px;" onchange="this.form.submit()">
         @foreach(range(1,12) as $m)
         <option value="{{ $m }}" {{ $m==$month ? 'selected' : '' }}>
-            {{ \Carbon\Carbon::create()->month($m)->locale('gu')->translatedFormat('F') }}
+            {{ \Carbon\Carbon::create()->month($m)->locale(app()->getLocale())->translatedFormat('F') }}
         </option>
         @endforeach
     </select>
@@ -67,10 +67,16 @@
 
 {{-- Summary --}}
 <div class="summary-row">
-    <span>📅 {{ \Carbon\Carbon::create()->month($month)->locale('gu')->translatedFormat('F') }} {{ $year }}</span>
-    <span>કુલ ખર્ચ: <strong>₹{{ number_format($total,0) }}</strong></span>
+   <span>
+    📅 {{ \Carbon\Carbon::create()
+        ->month($month)
+        ->locale(app()->getLocale())
+        ->translatedFormat('F') }}
+    {{ $year }}
+</span>
+    <span>{{ __('kharch.total_expense') }}: <strong>₹{{ number_format($total,0) }}</strong></span>
     @foreach($byCategory as $cat)
-    <span>{{ match($cat->category){'feed'=>'🌾 ચારો','medicine'=>'💊 દવા','labour'=>'👷 મજૂરી','equipment'=>'🔧 સાધન','veterinary'=>'🏥 ડૉક્ટર',default=>'📌 અન્ય'} }}: <strong>₹{{ number_format($cat->total,0) }}</strong></span>
+    <span>{{ match($cat->category){'feed'=>'🌾 '.__('kharch.feed'),'medicine'=>'💊 '.__('kharch.medicine'),'labour'=>'👷 '.__('kharch.labour'),'equipment'=>'🔧 '.__('kharch.equipment'),'veterinary'=>'🏥 '.__('kharch.veterinary'),default=>'📌 '.__('kharch.other')} }}: <strong>₹{{ number_format($cat->total,0) }}</strong></span>
     @endforeach
 </div>
 
@@ -79,7 +85,7 @@
     <div class="table-wrap">
         <table>
             <thead>
-                <tr><th>તારીખ</th><th>પ્રકાર</th><th>વર્ણન</th><th>ભેંસ</th><th>ખર્ચ (₹)</th><th></th></tr>
+                <tr><th>{{ __('kharch.date') }}</th><th>{{ __('kharch.category') }}</th><th>{{ __('kharch.description') }}</th><th>{{ __('kharch.buffalo') }}</th><th>{{ __('kharch.amount') }} (₹)</th><th></th></tr>
             </thead>
             <tbody>
                 @forelse($expenses as $e)
@@ -90,14 +96,14 @@
                     <td>{{ $e->buffalo?->tag_number ?? '—' }}</td>
                     <td><strong>₹{{ number_format($e->amount,0) }}</strong></td>
                     <td>
-                        <form method="POST" action="{{ route('kharch.destroy',$e) }}" onsubmit="return confirm('ડિલીટ?')">
+                        <form method="POST" action="{{ route('kharch.destroy',$e) }}" onsubmit="return confirm('{{ __('kharch.delete_confirm') }}')">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm">🗑</button>
                         </form>
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="6" style="text-align:center; color:#9ca3af; padding:30px;">કોઈ ખર્ચ નહીં</td></tr>
+                <tr><td colspan="6" style="text-align:center; color:#9ca3af; padding:30px;">{{ __('kharch.no_expense') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -1,18 +1,18 @@
 {{-- resources/views/buffalo/index.blade.php --}}
 @extends('layouts.app')
-@section('title','ભેંસો')
+@section('title', __('buffalo.all_buffaloes'))
 
 @section('content')
 <div class="page-header">
-    <h2>🐃 બધી ભેંસો</h2>
-    <a href="{{ route('buffalo.create') }}" class="btn btn-primary">➕ નવી ભેંસ</a>
+    <h2>🐃 {{ __('buffalo.all_buffaloes') }}</h2>
+    <a href="{{ route('buffalo.create') }}" class="btn btn-primary">➕ {{ __('buffalo.new_buffalo') }}</a>
 </div>
 
 <div class="card">
     <div class="table-wrap">
         <table>
             <thead>
-                <tr><th>ટેગ</th><th>નામ</th><th>સ્થિતિ</th><th>દૂધ</th><th>આ મહ. (L)</th><th></th></tr>
+                <tr><th>{{ __('buffalo.tag_number') }}</th><th>{{ __('buffalo.name') }}</th><th>{{ __('buffalo.status') }}</th><th>{{ __('buffalo.milk') }}</th><th>{{ __('buffalo.this_month') }}</th><th></th></tr>
             </thead>
             <tbody>
                 @forelse($buffaloes as $b)
@@ -25,12 +25,14 @@
                         </span>
                         <span class="badge badge-gray" style="margin-left:4px;">{{ $b->lactation_label }}</span>
                     </td>
-                    <td>{{ $b->milk_entries_count }} દિ.</td>
+                    <td>{{ $b->milk_entries_count }} {{ __('buffalo.days') }}.</td>
                     <td><strong>{{ number_format($b->totalMilkThisMonth(),1) }}</strong></td>
                     <td style="display:flex; gap:6px;">
                         <a href="{{ route('buffalo.show',$b) }}" class="btn btn-outline btn-sm">👁</a>
                         <a href="{{ route('buffalo.edit',$b) }}" class="btn btn-ghost btn-sm">✏️</a>
-                        <form method="POST" action="{{ route('buffalo.destroy',$b) }}" onsubmit="return confirm('ખરેખર ડિલીટ?')">
+                       <form method="POST"
+      action="{{ route('buffalo.destroy',$b) }}"
+      onsubmit="return confirm('{{ __('buffalo.delete_confirm') }}')">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm">🗑</button>
                         </form>
@@ -38,7 +40,7 @@
                 </tr>
                 @empty
                 <tr><td colspan="6" style="text-align:center; color:#9ca3af; padding:30px;">
-                    <a href="{{ route('buffalo.create') }}">➕ પ્રથમ ભેંસ ઉમેરો</a>
+                    <a href="{{ route('buffalo.create') }}">➕ {{ __('buffalo.new_buffalo') }}</a>
                 </td></tr>
                 @endforelse
             </tbody>

@@ -1,9 +1,9 @@
 @extends('layouts.app')
-@section('title','માસિક અહેવાલ')
+@section('title', __('reports.monthly_report'))
 
 @section('content')
 <div class="page-header">
-    <h2>📊 માસિક અહેવાલ</h2>
+    <h2>📊 {{ __('reports.monthly_report') }}</h2>
     <form method="GET" style="display:flex; gap:8px;">
         <select name="month" class="form-control" style="width:130px;" onchange="this.form.submit()">
             @foreach(range(1,12) as $m)
@@ -23,19 +23,19 @@
 {{-- Summary cards --}}
 <div class="grid-4" style="margin-bottom:20px;">
     <div class="stat-card">
-        <div class="label">🥛 કુલ દૂધ</div>
+        <div class="label">🥛 {{ __('reports.total_milk') }}</div>
         <div class="value">{{ number_format($totalMilk,1) }} L</div>
     </div>
     <div class="stat-card">
-        <div class="label">💰 કુલ આવક</div>
+        <div class="label">💰 {{ __('reports.total_income') }}</div>
         <div class="value">₹{{ number_format($totalIncome,0) }}</div>
     </div>
     <div class="stat-card">
-        <div class="label">💸 કુલ ખર્ચ</div>
+        <div class="label">💸 {{ __('reports.total_expense') }}</div>
         <div class="value" style="color:#ef4444;">₹{{ number_format($totalExpense,0) }}</div>
     </div>
     <div class="stat-card">
-        <div class="label">📈 {{ $netProfit >= 0 ? 'નફો' : 'નુકસાન' }}</div>
+        <div class="label">📈 {{ __('reports.profit') }}</div>
         <div class="value" style="color:{{ $netProfit >= 0 ? 'var(--primary)' : '#ef4444' }}">
             ₹{{ number_format(abs($netProfit),0) }}
         </div>
@@ -45,27 +45,27 @@
 <div class="grid-2" style="margin-bottom:20px;">
     {{-- Daily milk bar --}}
     <div class="card">
-        <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">📅 દૈનિક દૂધ (L)</h3>
+        <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">📅 {{ __('reports.daily_milk') }} (L)</h3>
         <canvas id="dailyChart" height="200"></canvas>
     </div>
 
     {{-- Expense breakdown --}}
     <div class="card">
-        <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">💸 ખર્ચ પ્રકાર</h3>
+        <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">💸 {{ __('reports.expense_type') }}</h3>
         @if($expenseByCategory->count())
         <canvas id="expPieChart" height="200"></canvas>
         @else
-        <p style="color:#9ca3af; text-align:center; padding:40px 0;">ખર્ચ નહીં</p>
+        <p style="color:#9ca3af; text-align:center; padding:40px 0;">{{ __('reports.no_expense') }}</p>
         @endif
     </div>
 </div>
 
 {{-- Per-buffalo table --}}
 <div class="card" style="margin-bottom:20px;">
-    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">🐃 ભેંસ દીઠ ઉત્પાદન</h3>
+    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">🐃 {{ __('reports.buffalo_production') }}</h3>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>ટેગ</th><th>નામ</th><th>કુલ (L)</th><th>દિવસો</th><th>સ્ ∅ L/દિ</th></tr></thead>
+            <thead><tr><th>{{ __('reports.tag') }}</th><th>{{ __('reports.name') }}</th><th>{{ __('reports.total') }} (L)</th><th>{{ __('reports.days') }}</th><th>{{ __('reports.average') }}</th></tr></thead>
             <tbody>
                 @forelse($buffaloSummary as $b)
                 <tr>
@@ -76,7 +76,7 @@
                     <td>{{ number_format($b['avg'],1) }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="5" style="text-align:center; color:#9ca3af;">ડેટા નહીં</td></tr>
+                <tr><td colspan="5" style="text-align:center; color:#9ca3af;">{{ __('reports.no_data') }}</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -85,10 +85,10 @@
 
 {{-- Daily milk table --}}
 <div class="card">
-    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">📋 દૈનિક સારાંશ</h3>
+    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">📋 {{ __('reports.daily_summary') }}</h3>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>તારીખ</th><th>કુલ (L)</th></tr></thead>
+            <thead><tr><th>{{ __('reports.date') }}</th><th>{{ __('reports.total') }} (L)</th></tr></thead>
             <tbody>
                 @foreach($dailyMilk as $row)
                 <tr>
@@ -119,7 +119,16 @@ new Chart(document.getElementById('dailyChart'), {
 new Chart(document.getElementById('expPieChart'), {
     type: 'pie',
     data: {
-        labels: {!! json_encode($expenseByCategory->map(fn($e) => match($e->category){'feed'=>'ચારો','medicine'=>'દવા','labour'=>'મજૂરી','equipment'=>'સાધન','veterinary'=>'ડૉક્ટર',default=>'અન્ય'})) !!},
+        labels: {!! json_encode(
+    $expenseByCategory->map(fn($e) => match($e->category) {
+        'feed' => __('reports.feed'),
+        'medicine' => __('reports.medicine'),
+        'labour' => __('reports.labour'),
+        'equipment' => __('reports.equipment'),
+        'veterinary' => __('reports.veterinary'),
+        default => __('reports.other'),
+    })
+) !!},
         datasets: [{ data: {!! json_encode($expenseByCategory->pluck('total')) !!}, backgroundColor: ['#16a34a','#ef4444','#f59e0b','#3b82f6','#8b5cf6','#6b7280'], borderWidth: 0 }]
     },
     options: { responsive: true, plugins: { legend: { position: 'bottom' } } }

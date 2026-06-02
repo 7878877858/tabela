@@ -1,19 +1,19 @@
 @extends('layouts.app')
-@section('title','દૂધ એન્ટ્રી')
+@section('title', __('milk.milk_entry'))
 
 @section('content')
 <div class="page-header">
-    <h2>🥛 દૂધ એન્ટ્રી</h2>
-    <a href="{{ route('milk.history') }}" class="btn btn-outline btn-sm">📋 ઇતિહાસ</a>
+    <h2>🥛 {{ __('milk.milk_entry') }}</h2>
+    <a href="{{ route('milk.history') }}" class="btn btn-outline btn-sm">📋 {{ __('milk.milk_history') }}</a>
 </div>
 
 {{-- Date selector --}}
 <div class="card" style="margin-bottom:16px; padding:14px 20px;">
     <form method="GET" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <label class="form-label" style="margin:0;">📅 તારીખ:</label>
+        <label class="form-label" style="margin:0;">📅 {{ __('milk.date') }}:</label>
         <input type="date" name="date" value="{{ $date }}" class="form-control" style="width:180px;" onchange="this.form.submit()">
         <span style="font-size:13px; color:#6b7280;">
-            કુલ: <strong>સવાર {{ number_format($totalMorning,1) }}L + સાંજ {{ number_format($totalEvening,1) }}L = {{ number_format($totalLiters,1) }}L</strong>
+            {{ __('milk.total') }}: <strong>{{ __('milk.morning') }} {{ number_format($totalMorning,1) }}L + {{ __('milk.evening') }} {{ number_format($totalEvening,1) }}L = {{ number_format($totalLiters,1) }}L</strong>
         </span>
     </form>
 </div>
@@ -27,11 +27,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ટેગ / નામ</th>
-                        <th>સવારનું (L)</th>
-                        <th>સાંજનું (L)</th>
-                        <th>કુલ (L)</th>
-                        <th>નોંધ</th>
+                        <th>{{ __('milk.tag_name') }}</th>
+                        <th>{{ __('milk.morning_liters') }} (L)</th>
+                        <th>{{ __('milk.evening_liters') }} (L)</th>
+                        <th>{{ __('milk.total_milk') }} (L)</th>
+                        <th>{{ __('milk.notes') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,12 +61,12 @@
                         <td>
                             <input type="text" name="entries[{{ $i }}][notes]"
                                 value="{{ $entry->notes ?? '' }}"
-                                class="form-control" style="width:140px;" placeholder="વૈકલ્પિક">
+                                class="form-control" style="width:140px;" placeholder="{{ __('milk.optional') }}">
                         </td>
                     </tr>
                     @empty
                     <tr><td colspan="5" style="text-align:center; color:#9ca3af; padding:30px;">
-                        કોઈ સક્રિય ભેંસ નથી. પહેલા <a href="{{ route('buffalo.create') }}">ભેંસ ઉમેરો</a>.
+                        {{ __('milk.no_active_buffalo') }} {{ __('milk.add_buffalo_first') }}.
                     </td></tr>
                     @endforelse
                 </tbody>
@@ -76,9 +76,9 @@
         @if($buffaloes->count() > 0)
         <div style="margin-top:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
             <div style="font-size:14px; color:#6b7280;">
-                કુલ ભેંસ: <strong>{{ $buffaloes->count() }}</strong>
+                {{ __('milk.total_buffaloes') }}: <strong>{{ $buffaloes->count() }}</strong>
             </div>
-            <button type="submit" class="btn btn-primary">💾 સેવ કરો</button>
+            <button type="submit" class="btn btn-primary">💾 {{ __('milk.save') }}</button>
         </div>
         @endif
     </form>
