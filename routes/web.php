@@ -10,6 +10,8 @@ use App\Http\Controllers\{
     EmployeeController,
     ReportController,
     SettingController,
+    AssetController,
+    TaskController
 };
 
 // Auth routes (Laravel Breeze/Fortify handles these)
@@ -26,6 +28,10 @@ Route::get('/locale-test', function () {
         'app_locale' => app()->getLocale(),
     ]);
 });
+Route::get('/employee-types', function () {
+    return view('employee-types.index');
+})->name('employee-types.index');
+
 Route::get('/language/{locale}', function ($locale) {
 
     if (in_array($locale, ['gu', 'en', 'hi'])) {
@@ -75,4 +81,9 @@ Route::middleware('auth')->group(function () {
     // Settings
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::resource('assets', AssetController::class);
+    Route::get('employees/{employee}/portal', [EmployeeController::class, 'portal'])
+    ->name('employee.portal');
+    Route::resource('tasks', TaskController::class);
+    Route::post('/tasks/{task}/complete',[TaskController::class,'complete'])->name('tasks.complete');
 });

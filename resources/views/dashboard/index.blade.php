@@ -1,5 +1,4 @@
 @extends('layouts.app')
-<!-- @section('title','ડૅશબોર્ડ') -->
 @section('title', __('dashboard.title'))
 @section('content')
 

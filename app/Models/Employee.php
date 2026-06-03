@@ -1,10 +1,11 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Task;
 class Employee extends Model
 {
-    protected $fillable = ['name','mobile','join_date','monthly_salary','status','notes'];
+    protected $fillable = ['name','employee_type','mobile','join_date','monthly_salary','status','notes'];
     protected $casts    = ['join_date' => 'date'];
 
     public function salaryPayments()
@@ -34,4 +35,10 @@ class Employee extends Model
         }
         return $months;
     }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+    
 }

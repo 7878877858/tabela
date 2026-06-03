@@ -19,4 +19,6 @@ return [
     'settings' => 'Settings',
     'logout' => 'Logout',
     'management' => 'Buffalo Farm Management',
+    'assets' => 'Assets',
+    'tasks' => 'Tasks',
 ];

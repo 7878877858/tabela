@@ -22,13 +22,22 @@
                 <label class="form-label">{{ __('employee.join_date') }} *</label>
                 <input type="date" name="join_date" class="form-control" value="{{ today()->toDateString() }}" required>
             </div>
-        </div>
-        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">{{ __('employee.employee_type') }} *</label>
+
+                <select name="employee_type" class="form-control" required>
+                    <option value="employee">{{ __('employee.employee_labour') }}</option>
+                    <option value="committee">{{ __('employee.committee_member') }}</option>
+                </select>
+            </div>
+             <div class="grid-2">
             <div class="form-group">
                 <label class="form-label">{{ __('employee.monthly_salary') }} (₹) *</label>
                 <input type="number" name="monthly_salary" step="100" min="0" class="form-control" placeholder="8000" required>
             </div>
         </div>
+        </div>
+       
         <button type="submit" class="btn btn-primary">➕ {{ __('employee.add') }}</button>
     </form>
 </div>
@@ -38,9 +47,27 @@
 <div class="card" style="margin-bottom:16px;">
     <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
         <div>
-            <h3 style="font-size:16px; font-weight:700;">{{ $emp->name }}
+            <h3 style="font-size:16px; font-weight:700;">
+    {{ $emp->name }}
+
+    <span class="badge {{ $emp->status==='active' ? 'badge-green' : 'badge-gray' }}"
+          style="margin-left:8px; font-size:11px;">
+        {{ $emp->status==='active' ? __('employee.active') : __('employee.inactive') }}
+    </span>
+
+    @if($emp->employee_type == 'committee')
+        <span class="badge badge-blue" style="margin-left:5px;">
+            👥 {{ __('employee.committee_badge') }}
+        </span>
+    @else
+        <span class="badge badge-yellow" style="margin-left:5px;">
+            👷 {{ __('employee.labour_worker') }}
+        </span>
+    @endif
+</h3>
+            <!-- <h3 style="font-size:16px; font-weight:700;">{{ $emp->name }}
                 <span class="badge {{ $emp->status==='active' ? 'badge-green' : 'badge-gray' }}" style="margin-left:8px; font-size:11px;">{{ $emp->status==='active' ? __('employee.active') : __('employee.inactive') }}</span>
-            </h3>
+            </h3> -->
             <p style="font-size:13px; color:#6b7280;">📞 {{ $emp->mobile ?? '—' }} | {{ __('employee.joined') }}: {{ $emp->join_date->format('d/m/Y') }} | {{ __('employee.salary') }}: ₹{{ number_format($emp->monthly_salary,0) }}/મહ.</p>
         </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -50,7 +77,10 @@
             @else
             <span class="badge badge-green">✅ {{ __('employee.updated') }}</span>
             @endif
-
+<a href="{{ route('employee.portal',$emp) }}"
+                class="btn btn-outline btn-sm">
+                📋 {{ __('employee.portal') }}
+                </a>
             {{-- Pay salary --}}
             <button onclick="document.getElementById('pay-{{ $emp->id }}').classList.toggle('hidden')" class="btn btn-outline btn-sm">💰 {{ __('employee.pay_salary') }}</button>
         </div>
@@ -76,7 +106,9 @@
                 <label class="form-label" style="margin-bottom:4px;">{{ __('employee.amount') }} (₹)</label>
                 <input type="number" name="amount" value="{{ $emp->monthly_salary }}" class="form-control" style="width:120px;">
             </div>
+            
             <button type="submit" class="btn btn-primary">✅ {{ __('employee.paid') }}</button>
+            
         </form>
     </div>
 </div>
