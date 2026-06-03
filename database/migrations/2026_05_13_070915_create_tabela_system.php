@@ -71,6 +71,7 @@ return new class extends Migration
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('employee_type'); // e.g. Milker, Cleaner, Manager
             $table->string('mobile')->nullable();
             $table->date('join_date');
             $table->decimal('monthly_salary', 10, 2);
