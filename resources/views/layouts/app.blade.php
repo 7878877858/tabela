@@ -16,16 +16,20 @@
         $farmName = \App\Models\Setting::get('farm_name', __('settings.default_farm_name'));
         $currency  = \App\Models\Setting::get('currency','₹');
         // Darken primary by ~20% for hover
-        function adjustColor($hex, $percent) {
-            $hex = ltrim($hex,'#');
-            $r = hexdec(substr($hex,0,2));
-            $g = hexdec(substr($hex,2,2));
-            $b = hexdec(substr($hex,4,2));
-            $r = max(0,min(255,$r + $percent));
-            $g = max(0,min(255,$g + $percent));
-            $b = max(0,min(255,$b + $percent));
-            return sprintf('#%02x%02x%02x',$r,$g,$b);
-        }
+       if (!function_exists('adjustColor')) {
+    function adjustColor($hex, $percent) {
+        $hex = ltrim($hex,'#');
+        $r = hexdec(substr($hex,0,2));
+        $g = hexdec(substr($hex,2,2));
+        $b = hexdec(substr($hex,4,2));
+
+        $r = max(0,min(255,$r + $percent));
+        $g = max(0,min(255,$g + $percent));
+        $b = max(0,min(255,$b + $percent));
+
+        return sprintf('#%02x%02x%02x',$r,$g,$b);
+    }
+}
         $primaryDark = adjustColor($primary, -30);
     @endphp
 
