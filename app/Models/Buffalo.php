@@ -1,15 +1,31 @@
 <?php
 // app/Models/Buffalo.php
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Buffalo extends Model
 {
-     protected $table = 'buffaloes'; // 🔥 FIX
+    protected $table = 'buffaloes'; // 🔥 FIX
     protected $fillable = [
-        'tag_number','name','dob','purchase_date',
-        'purchase_price','status','lactation_status','notes'
+        'tag_number',
+        'name',
+        'dob',
+        'purchase_date',
+        'purchase_price',
+        'status',
+        'lactation_status',
+        'notes',
+        'heat_date',
+        'ai_date',
+        'pregnancy_check_date',
+        'expected_delivery_date',
+
+        'birth_date',
+        'calf_tag_number',
+        'calf_gender',
+        'calf_weight',
     ];
 
     protected $casts = ['dob' => 'date', 'purchase_date' => 'date'];
@@ -38,23 +54,23 @@ class Buffalo extends Model
     }
 
     public function getStatusLabelAttribute(): string
-{
-    return match($this->status) {
-        'active' => __('buffalo.active'),
-        'dry'    => __('buffalo.dry'),
-        'sold'   => __('buffalo.sold'),
-        'dead'   => __('buffalo.dead'),
-        default  => $this->status,
-    };
-}
+    {
+        return match ($this->status) {
+            'active' => __('buffalo.active'),
+            'dry'    => __('buffalo.dry'),
+            'sold'   => __('buffalo.sold'),
+            'dead'   => __('buffalo.dead'),
+            default  => $this->status,
+        };
+    }
 
-public function getLactationLabelAttribute(): string
-{
-    return match($this->lactation_status) {
-        'lactating' => __('buffalo.lactating'),
-        'dry'       => __('buffalo.dry'),
-        'pregnant'  => __('buffalo.pregnant'),
-        default     => $this->lactation_status,
-    };
-}
+    public function getLactationLabelAttribute(): string
+    {
+        return match ($this->lactation_status) {
+            'lactating' => __('buffalo.lactating'),
+            'dry'       => __('buffalo.dry'),
+            'pregnant'  => __('buffalo.pregnant'),
+            default     => $this->lactation_status,
+        };
+    }
 }

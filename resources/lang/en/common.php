@@ -21,4 +21,5 @@ return [
     'management' => 'Buffalo Farm Management',
     'assets' => 'Assets',
     'tasks' => 'Tasks',
+    'meetings' => 'Meetings',
 ];

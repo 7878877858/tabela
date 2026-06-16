@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 @section('title', __('buffalo.title').' — '.$buffalo->tag_number)
 
@@ -10,7 +11,7 @@
     </div>
 </div>
 
-<div class="grid-2" style="margin-bottom:20px;">
+<div class="grid-3" style="margin-bottom:20px;">
     <div class="card">
         <h3 style="font-size:14px; font-weight:600; margin-bottom:12px; color:#6b7280;">📋 {{ __('buffalo.details') }}</h3>
         <table style="font-size:14px;">
@@ -21,6 +22,60 @@
             <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.purchase_price') }}</td><td>{{ $buffalo->purchase_price ? '₹'.number_format($buffalo->purchase_price,0) : '—' }}</td></tr>
         </table>
     </div>
+
+    <div class="card">
+
+    <h3>🤰 પ્રજનન માહિતી</h3>
+
+    <table>
+        <tr>
+            <td>Heat તારીખ</td>
+            <td>{{ $buffalo->heat_date ?? '-' }}</td>
+        </tr>
+
+        <tr>
+            <td>AI તારીખ</td>
+            <td>{{ $buffalo->ai_date ?? '-' }}</td>
+        </tr>
+
+        <tr>
+            <td>Pregnancy Check</td>
+            <td>{{ $buffalo->pregnancy_check_date ?? '-' }}</td>
+        </tr>
+
+        <tr>
+            <td>Expected Delivery</td>
+            <td>{{ $buffalo->expected_delivery_date ?? '-' }}</td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <h3>🐄 બચ્ચા જન્મ માહિતી</h3>
+
+    <table>
+        <tr>
+            <td>Birth તારીખ</td>
+            <td>{{ $buffalo->birth_date ?? '-' }}</td>
+        </tr>
+
+        <tr>
+            <td>Calf Tag</td>
+            <td>{{ $buffalo->calf_tag_number ?? '-' }}</td>
+        </tr>
+
+        <tr>
+            <td>Gender</td>
+            <td>{{ $buffalo->calf_gender ?? '-' }}</td>
+        </tr>
+
+        <tr>
+            <td>Weight</td>
+            <td>{{ $buffalo->calf_weight ?? '-' }} Kg</td>
+        </tr>
+    </table>
+
+</div>
 
     <div class="card">
         <h3 style="font-size:14px; font-weight:600; margin-bottom:12px; color:#6b7280;">📊 {{ __('buffalo.production') }}</h3>

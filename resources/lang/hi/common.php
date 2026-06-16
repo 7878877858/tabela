@@ -21,4 +21,5 @@ return [
     'management' => 'तबेला प्रबंधन',
     'assets' => 'संपत्तियाँ',
     'tasks' => 'कार्य',
+    'meetings' => 'बैठकें',
 ];

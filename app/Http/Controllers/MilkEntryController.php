@@ -1,8 +1,11 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\{MilkEntry, Buffalo};
 use Illuminate\Http\Request;
+use App\Models\DailyReport;
+use App\Models\DailyReportMilk;
 
 class MilkEntryController extends Controller
 {
@@ -10,8 +13,8 @@ class MilkEntryController extends Controller
     {
         $date = $request->get('date', today()->toDateString());
 
-        $buffaloes = Buffalo::where('status','active')
-            ->where('lactation_status','lactating')
+        $buffaloes = Buffalo::where('status', 'active')
+            ->where('lactation_status', 'lactating')
             ->orderBy('tag_number')
             ->get();
 
@@ -25,7 +28,7 @@ class MilkEntryController extends Controller
         $totalEvening = $entries->sum('evening_liters');
         $totalLiters  = $entries->sum('total_liters');
 
-        return view('milk.index', compact('buffaloes','entries','date','totalMorning','totalEvening','totalLiters'));
+        return view('milk.index', compact('buffaloes', 'entries', 'date', 'totalMorning', 'totalEvening', 'totalLiters'));
     }
 
     public function store(Request $request)
@@ -48,6 +51,24 @@ class MilkEntryController extends Controller
                         'notes'          => $row['notes'] ?? null,
                     ]
                 );
+                // Daily Report Milk sync
+                $dailyReport = DailyReport::whereDate('report_date', $request->entry_date)->first();
+
+                if ($dailyReport) {
+
+                    DailyReportMilk::updateOrCreate(
+                        [
+                            'daily_report_id' => $dailyReport->id,
+                            'buffalo_id'      => $row['buffalo_id'],
+                        ],
+                        [
+                            'morning_milk' => $row['morning_liters'] ?? 0,
+                            'evening_milk' => $row['evening_liters'] ?? 0,
+                            'total_milk'   => ($row['morning_liters'] ?? 0)
+                                + ($row['evening_liters'] ?? 0),
+                        ]
+                    );
+                }
             }
         }
 
@@ -69,7 +90,7 @@ class MilkEntryController extends Controller
 
         $monthTotal = $daily->sum('total');
 
-        return view('milk.history', compact('daily','month','year','monthTotal'));
+        return view('milk.history', compact('daily', 'month', 'year', 'monthTotal'));
     }
 
     public function destroy(MilkEntry $milkEntry)

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Buffalo;
@@ -30,6 +31,15 @@ class BuffaloController extends Controller
             'status'           => 'required|in:active,sold,dead',
             'lactation_status' => 'required|in:lactating,dry,pregnant',
             'notes'            => 'nullable|string',
+            'heat_date' => 'nullable|date',
+            'ai_date' => 'nullable|date',
+            'pregnancy_check_date' => 'nullable|date',
+            'expected_delivery_date' => 'nullable|date',
+
+            'birth_date' => 'nullable|date',
+            'calf_tag_number' => 'nullable|string|max:191',
+            'calf_gender' => 'nullable|in:male,female',
+            'calf_weight' => 'nullable|numeric',
         ]);
 
         Buffalo::create($validated);
@@ -49,11 +59,11 @@ class BuffaloController extends Controller
 
         $monthlyMilk = $buffalo->milkEntries()
             ->selectRaw('YEAR(entry_date) as yr, MONTH(entry_date) as mo, SUM(total_liters) as total')
-            ->groupBy('yr','mo')
+            ->groupBy('yr', 'mo')
             ->orderByDesc('yr')->orderByDesc('mo')
             ->take(6)->get();
 
-        return view('buffalo.show', compact('buffalo','milkHistory','expenses','monthlyMilk'));
+        return view('buffalo.show', compact('buffalo', 'milkHistory', 'expenses', 'monthlyMilk'));
     }
 
     public function edit(Buffalo $buffalo)
@@ -64,7 +74,7 @@ class BuffaloController extends Controller
     public function update(Request $request, Buffalo $buffalo)
     {
         $validated = $request->validate([
-            'tag_number'       => 'required|unique:buffaloes,tag_number,'.$buffalo->id,
+            'tag_number'       => 'required|unique:buffaloes,tag_number,' . $buffalo->id,
             'name'             => 'nullable|string|max:100',
             'dob'              => 'nullable|date',
             'purchase_date'    => 'nullable|date',

@@ -11,11 +11,14 @@ use App\Http\Controllers\{
     ReportController,
     SettingController,
     AssetController,
-    TaskController
+    MeetingController,
+    TaskController,
+    DailyReportController,
+    FeedController
 };
 
 // Auth routes (Laravel Breeze/Fortify handles these)
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -39,7 +42,6 @@ Route::get('/language/{locale}', function ($locale) {
     }
 
     return redirect()->back();
-
 })->name('language.switch');
 
 // Protected routes
@@ -83,7 +85,11 @@ Route::middleware('auth')->group(function () {
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
     Route::resource('assets', AssetController::class);
     Route::get('employees/{employee}/portal', [EmployeeController::class, 'portal'])
-    ->name('employee.portal');
+        ->name('employee.portal');
     Route::resource('tasks', TaskController::class);
-    Route::post('/tasks/{task}/complete',[TaskController::class,'complete'])->name('tasks.complete');
+    Route::post('/tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
+    Route::resource('meetings', MeetingController::class);
+    Route::resource('daily-reports', DailyReportController::class);
+    Route::resource('daily-reports', DailyReportController::class);
+    Route::resource('feeds', FeedController::class);
 });
