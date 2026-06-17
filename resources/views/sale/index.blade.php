@@ -2,10 +2,28 @@
 @section('title', __('sale.milk_sales'))
 
 @section('content')
-<div class="page-header"><h2>💰 {{ __('sale.milk_sales') }}</h2></div>
+<link rel="stylesheet" href="{{ asset('assets/css/daily-report.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/css/milk-ledger.css') }}">
 
-<div class="card" style="margin-bottom:20px;">
-    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">{{ __('sale.new_sale') }}</h3>
+<x-section-header :title="__('sale.milk_sales')" icon="💰">
+    <x-slot:actions>
+        <a href="{{ route('milk.transactions') }}" class="btn btn-outline btn-sm">📒 Milk Transactions</a>
+    </x-slot:actions>
+</x-section-header>
+
+@if($errors->any())
+<div class="alert alert-danger">
+    @foreach($errors->all() as $error)
+    <div>{{ $error }}</div>
+    @endforeach
+</div>
+@endif
+
+<div class="summary-row">
+    <span>🥛 દૂધ સ્ટોક: <strong>{{ number_format($milkBalance, 2) }} L</strong></span>
+</div>
+
+<x-form-card :title="__('sale.new_sale')" icon="➕">
     <form method="POST" action="{{ route('sale.store') }}">
         @csrf
         <div class="grid-3">
@@ -42,68 +60,116 @@
         </div>
         <button type="submit" class="btn btn-primary">➕ {{ __('sale.add') }}</button>
     </form>
-</div>
+</x-form-card>
 
-{{-- Month filter --}}
-<form method="GET" style="display:flex; gap:10px; margin-bottom:16px;">
-    <select name="month" class="form-control" style="width:130px;" onchange="this.form.submit()">
-        @foreach(range(1,12) as $m)
-        <option value="{{ $m }}" {{ $m==$month ? 'selected' : '' }}>
-            {{ \Carbon\Carbon::create()->month($m)->format('F') }}
-        </option>
-        @endforeach
-    </select>
-    <select name="year" class="form-control" style="width:100px;" onchange="this.form.submit()">
-        @foreach(range(now()->year, 2020) as $y)
-        <option value="{{ $y }}" {{ $y==$year ? 'selected' : '' }}>{{ $y }}</option>
-        @endforeach
-    </select>
-</form>
-
-<div class="summary-row">
-    <span>📦 {{ number_format($totalLiters,1) }} L {{ __('sale.sold_liters') }}</span>
-    <span>💰 {{ __('sale.income') }}: <strong>₹{{ number_format($totalIncome,0) }}</strong></span>
-    @if($pending > 0)<span style="color:#dc2626;">⏳ {{ __('sale.pending') }}: <strong>₹{{ number_format($pending,0) }}</strong></span>@endif
-</div>
-
-<div class="card">
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>{{ __('sale.date') }}</th><th>{{ __('sale.liters') }}</th><th>{{ __('sale.price_per_liter') }}</th><th>{{ __('sale.total') }}</th><th>{{ __('sale.buyer_name') }}</th><th>{{ __('sale.payment') }}</th><th></th></tr></thead>
-            <tbody>
-                @forelse($sales as $s)
-                <tr>
-                    <td>{{ $s->sale_date->format('d/m/Y') }}</td>
-                    <td>{{ number_format($s->liters_sold,1) }}</td>
-                    <td>₹{{ $s->price_per_liter }}</td>
-                    <td><strong>₹{{ number_format($s->liters_sold * $s->price_per_liter,0) }}</strong></td>
-                    <td>{{ $s->buyer_name ?? '—' }}</td>
-                    <td>
-                        @if($s->payment_status === 'paid')
-                            <span class="badge badge-green">✅ {{ __('sale.paid') }}</span>
-                        @else
-                            <form method="POST" action="{{ route('sale.pay',$s) }}" style="display:inline;">
-                                @csrf @method('PATCH')
-                                <button type="submit" class="btn btn-sm badge-yellow" style="border:none; cursor:pointer; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600; background:#fef9c3; color:#ca8a04;">⏳ {{ __('sale.pending') }} — {{ __('sale.mark_paid') }}</button>
-                            </form>
-                        @endif
-                    </td>
-                    <td>
-                        <form method="POST" action="{{ route('sale.destroy',$s) }}" onsubmit="return confirm('{{ __('sale.delete_confirm') }}')">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm">🗑</button>
-                        </form>
-                    </td>
-                </tr>
-                @empty
-                <tr><td colspan="7" style="text-align:center; color:#9ca3af; padding:30px;">{{ __('sale.no_sales') }}</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+<div id="milkSalesLedger" class="milk-ledger-page daily-report-page">
+    <div class="ml-summary-cards">
+        <div class="ml-metric-card">
+            <span class="ml-metric-card__label">🥛 Filtered Liters Sold</span>
+            <span class="ml-metric-card__value" id="mlSummaryTotalLiters">0 L</span>
+        </div>
+        <div class="ml-metric-card">
+            <span class="ml-metric-card__label">💰 Filtered Sales</span>
+            <span class="ml-metric-card__value" id="mlSummaryTotalSales">₹0</span>
+        </div>
+        <div class="ml-metric-card">
+            <span class="ml-metric-card__label">⏳ Pending</span>
+            <span class="ml-metric-card__value" id="mlSummaryPending">₹0</span>
+        </div>
     </div>
-    <div style="margin-top:16px;">{{ $sales->links() }}</div>
+
+    <x-form-card :title="__('sale.milk_sales')" icon="📋" :flush="true">
+        <div class="ml-ledger-panel">
+            <div class="ml-filter-bar">
+                <div class="ml-filter-row">
+                    <div class="form-group">
+                        <label class="form-label">Date Range</label>
+                        <select id="mlDatePreset" class="form-control form-control-sm">
+                            <option value="today">Today</option>
+                            <option value="this_week">This Week</option>
+                            <option value="this_month" selected>This Month</option>
+                            <option value="last_month">Last Month</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">From</label>
+                        <input type="date" id="mlDateFrom" class="form-control form-control-sm" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">To</label>
+                        <input type="date" id="mlDateTo" class="form-control form-control-sm" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Payment</label>
+                        <select id="mlPaymentStatus" class="form-control form-control-sm">
+                            <option value="">All</option>
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="ml-filter-row">
+                    <div class="form-group">
+                        <label class="form-label">Liters Min</label>
+                        <input type="number" step="0.1" id="mlLitersMin" class="form-control form-control-sm" placeholder="Min">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Liters Max</label>
+                        <input type="number" step="0.1" id="mlLitersMax" class="form-control form-control-sm" placeholder="Max">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount Min (₹)</label>
+                        <input type="number" step="1" id="mlAmountMin" class="form-control form-control-sm" placeholder="Min">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount Max (₹)</label>
+                        <input type="number" step="1" id="mlAmountMax" class="form-control form-control-sm" placeholder="Max">
+                    </div>
+                    <div class="form-group ml-search-group">
+                        <label class="form-label">Search Buyer</label>
+                        <input type="search" id="mlSearch" class="form-control form-control-sm" placeholder="Buyer name..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="ml-filter-actions">
+                    <span class="text-muted" id="mlFilteredCount">0 records</span>
+                    <div class="ml-export-btns">
+                        <button type="button" class="btn btn-outline btn-sm" id="mlExportCsv">Export CSV</button>
+                        <button type="button" class="btn btn-outline btn-sm" id="mlExportExcel">Export Excel</button>
+                        <button type="button" class="btn btn-outline btn-sm" id="mlExportPdf">Export PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive ml-table-wrap">
+                <table class="ds-table ml-ledger-table">
+                    <thead>
+                        <tr>
+                            <th data-sort="date">Date ↕</th>
+                            <th data-sort="liters">Liters ↕</th>
+                            <th data-sort="price_per_liter">Rate ↕</th>
+                            <th data-sort="amount">Amount ↕</th>
+                            <th data-sort="buyer_name">Buyer ↕</th>
+                            <th data-sort="payment_status">Payment</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="milkSalesBody"></tbody>
+                </table>
+            </div>
+            <div id="milkSalesPagination" class="dr-grid-pagination"></div>
+        </div>
+    </x-form-card>
 </div>
-@endsection
+
+@php
+    $milkSalesConfig = [
+        'csrf' => csrf_token(),
+        'deleteConfirm' => __('sale.delete_confirm'),
+    ];
+@endphp
+<script type="application/json" id="milkSalesJson">@json($salesJson)</script>
+<script type="application/json" id="milkSalesConfig">@json($milkSalesConfig)</script>
 
 @push('scripts')
 <script>
@@ -114,4 +180,6 @@ function calcSale() {
 }
 calcSale();
 </script>
+<script src="{{ asset('assets/js/milk-data-grid.js') }}"></script>
 @endpush
+@endsection

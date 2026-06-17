@@ -15,11 +15,20 @@
     <div class="card">
         <h3 style="font-size:14px; font-weight:600; margin-bottom:12px; color:#6b7280;">📋 {{ __('buffalo.details') }}</h3>
         <table style="font-size:14px;">
-            <tr><td style="color:#6b7280; padding:5px 0; width:130px;">{{ __('buffalo.status') }}</td><td><span class="badge {{ $buffalo->status==='active' ? 'badge-green' : 'badge-red' }}">{{ $buffalo->status_label }}</span></td></tr>
+            <tr><td style="color:#6b7280; padding:5px 0; width:130px;">પ્રકાર</td><td><span class="badge badge-gray">{{ $buffalo->animal_type_label }}</span></td></tr>
+            <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.status') }}</td><td><span class="badge {{ $buffalo->status==='active' ? 'badge-green' : 'badge-red' }}">{{ $buffalo->status_label }}</span></td></tr>
             <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.milk') }}</td><td><span class="badge badge-blue">{{ $buffalo->lactation_label }}</span></td></tr>
             <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.dob') }}</td><td>{{ $buffalo->dob?->format('d/m/Y') ?? '—' }}</td></tr>
             <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.purchase_date') }}</td><td>{{ $buffalo->purchase_date?->format('d/m/Y') ?? '—' }}</td></tr>
             <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.purchase_price') }}</td><td>{{ $buffalo->purchase_price ? '₹'.number_format($buffalo->purchase_price,0) : '—' }}</td></tr>
+            @if($buffalo->mother)
+            <tr><td style="color:#6b7280; padding:5px 0;">માતા</td><td><a href="{{ route('buffalo.show', $buffalo->mother) }}">{{ $buffalo->mother->tag_number }}</a></td></tr>
+            @endif
+            @if(in_array($buffalo->normalized_animal_type, ['buffalo_calf', 'cow_calf']))
+            <tr><td style="color:#6b7280; padding:5px 0;">જન્મ તારીખ</td><td>{{ $buffalo->birth_date?->format('d/m/Y') ?? '—' }}</td></tr>
+            <tr><td style="color:#6b7280; padding:5px 0;">જાતિ</td><td>{{ $buffalo->gender ?? '—' }}</td></tr>
+            <tr><td style="color:#6b7280; padding:5px 0;">વજન</td><td>{{ $buffalo->weight ? $buffalo->weight.' Kg' : '—' }}</td></tr>
+            @endif
         </table>
     </div>
 
@@ -51,29 +60,39 @@
 
     <hr>
 
+    @if(in_array($buffalo->normalized_animal_type, ['buffalo', 'cow']))
     <h3>🐄 બચ્ચા જન્મ માહિતી</h3>
+
+    @php $linkedCalf = $buffalo->birthCalf; @endphp
 
     <table>
         <tr>
             <td>Birth તારીખ</td>
-            <td>{{ $buffalo->birth_date ?? '-' }}</td>
+            <td>{{ ($linkedCalf?->birth_date ?? $buffalo->birth_date)?->format('d/m/Y') ?? '-' }}</td>
         </tr>
 
         <tr>
             <td>Calf Tag</td>
-            <td>{{ $buffalo->calf_tag_number ?? '-' }}</td>
+            <td>
+                @if($linkedCalf)
+                    <a href="{{ route('buffalo.show', $linkedCalf) }}"><strong>{{ $linkedCalf->tag_number }}</strong></a>
+                @else
+                    {{ $buffalo->calf_tag_number ?? '-' }}
+                @endif
+            </td>
         </tr>
 
         <tr>
             <td>Gender</td>
-            <td>{{ $buffalo->calf_gender ?? '-' }}</td>
+            <td>{{ $linkedCalf?->gender ?? $buffalo->calf_gender ?? '-' }}</td>
         </tr>
 
         <tr>
             <td>Weight</td>
-            <td>{{ $buffalo->calf_weight ?? '-' }} Kg</td>
+            <td>{{ $linkedCalf?->weight ?? $buffalo->calf_weight ?? '-' }} Kg</td>
         </tr>
     </table>
+    @endif
 
 </div>
 

@@ -1,7 +1,8 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\{Buffalo, MilkEntry, MilkSale, Expense, Employee, Setting};
+use App\Models\{Buffalo, MilkEntry, MilkSale, Expense, Income, Employee, Setting, Feed};
+use App\Services\MilkStockService;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -12,32 +13,55 @@ class DashboardController extends Controller
         $today     = today();
         $thisMonth = now();
 
-        // Buffalo stats
-        $totalBuffaloes    = Buffalo::where('status','active')->count();
+        $totalBuffaloes    = Buffalo::totalHeadCount(true);
+        $animalTypeCounts  = Buffalo::activeCountsByAnimalType(true);
+        $animalTypeSummary = Buffalo::animalTypeSummaryLabel($animalTypeCounts);
         $lactatingCount    = Buffalo::where('status','active')->where('lactation_status','lactating')->count();
 
-        // Today's milk
         $todayMilk = MilkEntry::whereDate('entry_date', $today)->sum('total_liters');
 
-        // This month milk
         $monthMilk = MilkEntry::whereYear('entry_date', $thisMonth->year)
-                               ->whereMonth('entry_date', $thisMonth->month)
-                               ->sum('total_liters');
+            ->whereMonth('entry_date', $thisMonth->month)
+            ->sum('total_liters');
 
-        // This month income
-        $monthIncome = MilkSale::whereYear('sale_date', $thisMonth->year)
-                                ->whereMonth('sale_date', $thisMonth->month)
-                                ->sum('total_amount');
+        $milkSaleIncome = MilkSale::whereYear('sale_date', $thisMonth->year)
+            ->whereMonth('sale_date', $thisMonth->month)
+            ->sum('total_amount');
 
-        // This month expense
+        $moduleIncome = Income::whereYear('income_date', $thisMonth->year)
+            ->whereMonth('income_date', $thisMonth->month)
+            ->sum('amount');
+
+        $monthIncome = $milkSaleIncome + $moduleIncome;
+        $incomeCount = Income::count();
+
+        $todaySalesAmount = MilkSale::whereDate('sale_date', $today)->sum('total_amount');
+        $todaySoldLiters  = MilkSale::whereDate('sale_date', $today)->sum('liters_sold');
+        $remainingMilk    = max(0, (float) $todayMilk - (float) $todaySoldLiters);
+
         $monthExpense = Expense::whereYear('expense_date', $thisMonth->year)
-                                ->whereMonth('expense_date', $thisMonth->month)
-                                ->sum('amount');
+            ->whereMonth('expense_date', $thisMonth->month)
+            ->sum('amount');
 
-        // Net profit this month
         $netProfit = $monthIncome - $monthExpense;
 
-        // Last 7 days milk chart data
+        $lowFeedStock = Feed::where('status', 1)
+            ->where('min_stock', '>', 0)
+            ->withInventoryStats()
+            ->get()
+            ->filter(fn (Feed $f) => $f->isLowStock());
+
+        $deliveryThisWeek = Buffalo::where('status', 'active')
+            ->whereBetween('expected_delivery_date', [$today, $today->copy()->addDays(7)])
+            ->count();
+
+        $todayMilkEntered = MilkEntry::whereDate('entry_date', $today)->exists();
+
+        $heatReminders = Buffalo::where('status', 'active')
+            ->whereNotNull('heat_date')
+            ->whereDate('heat_date', '>=', $today->copy()->subDays(21))
+            ->count();
+
         $last7 = collect();
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i)->toDateString();
@@ -45,14 +69,12 @@ class DashboardController extends Controller
             $last7->push(['date' => Carbon::parse($date)->format('d/m'), 'liters' => $liters]);
         }
 
-        // Expense breakdown this month
         $expenseBreakdown = Expense::whereYear('expense_date', $thisMonth->year)
             ->whereMonth('expense_date', $thisMonth->month)
             ->select('category', DB::raw('SUM(amount) as total'))
             ->groupBy('category')
             ->get();
 
-        // Top milk producers this month
         $topBuffaloes = Buffalo::with(['milkEntries' => function ($q) use ($thisMonth) {
             $q->whereYear('entry_date', $thisMonth->year)
               ->whereMonth('entry_date', $thisMonth->month);
@@ -66,9 +88,14 @@ class DashboardController extends Controller
           ->sortByDesc('total')
           ->take(5);
 
-        // Pending salaries
         $pendingSalary = Employee::where('status','active')->get()
             ->sum(fn($e) => $e->pendingMonths() * $e->monthly_salary);
+
+        $pregnantCount = Buffalo::where('status', 'active')
+            ->where('lactation_status', 'pregnant')
+            ->count();
+
+        $userName = auth()->user()->name ?? 'Admin';
 
         $settings = [
             'farm_name'     => Setting::get('farm_name', 'મારો તબેલો'),
@@ -77,9 +104,12 @@ class DashboardController extends Controller
         ];
 
         return view('dashboard.index', compact(
-            'totalBuffaloes','lactatingCount','todayMilk','monthMilk',
-            'monthIncome','monthExpense','netProfit','last7',
-            'expenseBreakdown','topBuffaloes','pendingSalary','settings'
+            'totalBuffaloes','animalTypeCounts','animalTypeSummary','lactatingCount','pregnantCount','userName',
+            'todayMilk','monthMilk',
+            'monthIncome','moduleIncome','incomeCount','monthExpense','netProfit',
+            'todaySalesAmount','todaySoldLiters','remainingMilk',
+            'lowFeedStock','deliveryThisWeek','todayMilkEntered','heatReminders',
+            'last7','expenseBreakdown','topBuffaloes','pendingSalary','settings'
         ));
     }
 }

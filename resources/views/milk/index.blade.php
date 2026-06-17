@@ -2,95 +2,69 @@
 @section('title', __('milk.milk_entry'))
 
 @section('content')
-<div class="page-header">
-    <h2>🥛 {{ __('milk.milk_entry') }}</h2>
-    <a href="{{ route('milk.history') }}" class="btn btn-outline btn-sm">📋 {{ __('milk.milk_history') }}</a>
+
+<x-section-header :title="__('milk.milk_entry')" icon="🥛">
+    <x-slot:actions>
+        <a href="{{ route('milk.history') }}" class="btn btn-outline btn-sm">📋 {{ __('milk.milk_history') }}</a>
+        <a href="{{ route('daily-reports.create') }}" class="btn btn-primary btn-sm">📋 દૈનિક અહેવાલ</a>
+    </x-slot:actions>
+</x-section-header>
+
+<div class="alert alert-success">
+    💡 મુખ્ય દૂધ એન્ટ્રી માટે <a href="{{ route('daily-reports.create') }}"><strong>દૈનિક અહેવાલ</strong></a> વાપરો — એક જ જગ્યાએ દૂધ + ચારો + સ્ટાફ.
 </div>
 
-{{-- Date selector --}}
-<div class="card" style="margin-bottom:16px; padding:14px 20px;">
-    <form method="GET" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <label class="form-label" style="margin:0;">📅 {{ __('milk.date') }}:</label>
-        <input type="date" name="date" value="{{ $date }}" class="form-control" style="width:180px;" onchange="this.form.submit()">
-        <span style="font-size:13px; color:#6b7280;">
+<x-form-card title="Date & Summary" icon="📅">
+    <form method="GET" class="d-flex flex-wrap align-items-center gap-2">
+        <div class="form-group" style="margin:0;min-width:180px;">
+            <label class="form-label">{{ __('milk.date') }}</label>
+            <input type="date" name="date" value="{{ $date }}" class="form-control" onchange="this.form.submit()">
+        </div>
+        <div style="font-size:0.875rem;color:var(--ds-text-muted);padding-top:1.5rem;">
             {{ __('milk.total') }}: <strong>{{ __('milk.morning') }} {{ number_format($totalMorning,1) }}L + {{ __('milk.evening') }} {{ number_format($totalEvening,1) }}L = {{ number_format($totalLiters,1) }}L</strong>
-        </span>
+        </div>
     </form>
+</x-form-card>
+
+<div class="alert alert-warning">
+    📋 <strong>Read-only view</strong> — synced from Daily Report. <a href="{{ route('daily-reports.create') }}">Enter data in Daily Report</a>
 </div>
 
-<div class="card">
-    <form method="POST" action="{{ route('milk.store') }}">
-        @csrf
-        <input type="hidden" name="entry_date" value="{{ $date }}">
-
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>{{ __('milk.tag_name') }}</th>
-                        <th>{{ __('milk.morning_liters') }} (L)</th>
-                        <th>{{ __('milk.evening_liters') }} (L)</th>
-                        <th>{{ __('milk.total_milk') }} (L)</th>
-                        <th>{{ __('milk.notes') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($buffaloes as $i => $buffalo)
-                    @php $entry = $entries[$buffalo->id] ?? null; @endphp
-                    <tr>
-                        <td>
-                            <input type="hidden" name="entries[{{ $i }}][buffalo_id]" value="{{ $buffalo->id }}">
-                            <strong>{{ $buffalo->tag_number }}</strong>
-                            @if($buffalo->name) <span style="color:#6b7280; font-size:12px;">{{ $buffalo->name }}</span> @endif
-                        </td>
-                        <td>
-                            <input type="number" step="0.1" min="0" name="entries[{{ $i }}][morning_liters]"
-                                value="{{ $entry->morning_liters ?? '' }}"
-                                class="form-control" style="width:100px;"
-                                placeholder="0.0" onchange="calcTotal({{ $i }})">
-                        </td>
-                        <td>
-                            <input type="number" step="0.1" min="0" name="entries[{{ $i }}][evening_liters]"
-                                value="{{ $entry->evening_liters ?? '' }}"
-                                class="form-control" style="width:100px;"
-                                placeholder="0.0" onchange="calcTotal({{ $i }})">
-                        </td>
-                        <td id="total-{{ $i }}" style="font-weight:600; color:var(--primary);">
-                            {{ $entry ? number_format($entry->total_liters,1) : '—' }}
-                        </td>
-                        <td>
-                            <input type="text" name="entries[{{ $i }}][notes]"
-                                value="{{ $entry->notes ?? '' }}"
-                                class="form-control" style="width:140px;" placeholder="{{ __('milk.optional') }}">
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="5" style="text-align:center; color:#9ca3af; padding:30px;">
-                        {{ __('milk.no_active_buffalo') }} {{ __('milk.add_buffalo_first') }}.
-                    </td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        @if($buffaloes->count() > 0)
-        <div style="margin-top:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
-            <div style="font-size:14px; color:#6b7280;">
-                {{ __('milk.total_buffaloes') }}: <strong>{{ $buffaloes->count() }}</strong>
-            </div>
-            <button type="submit" class="btn btn-primary">💾 {{ __('milk.save') }}</button>
-        </div>
-        @endif
-    </form>
-</div>
+<x-form-card :title="__('milk.milk_entry')" icon="🥛" :flush="true">
+    <x-responsive-table>
+        <table class="ds-table">
+            <thead>
+                <tr>
+                    <th>{{ __('milk.tag_name') }}</th>
+                    <th>{{ __('milk.morning_liters') }} (L)</th>
+                    <th>{{ __('milk.evening_liters') }} (L)</th>
+                    <th>{{ __('milk.total_milk') }} (L)</th>
+                    <th>{{ __('milk.notes') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($buffaloes as $buffalo)
+                @php $entry = $entries[$buffalo->id] ?? null; @endphp
+                <tr>
+                    <td data-label="{{ __('milk.tag_name') }}">
+                        <strong>{{ $buffalo->tag_number }}</strong>
+                        @if($buffalo->name) <span class="text-muted" style="font-size:12px;">{{ $buffalo->name }}</span> @endif
+                    </td>
+                    <td data-label="{{ __('milk.morning_liters') }}">{{ $entry ? number_format($entry->morning_liters, 2) : '—' }}</td>
+                    <td data-label="{{ __('milk.evening_liters') }}">{{ $entry ? number_format($entry->evening_liters, 2) : '—' }}</td>
+                    <td class="text-primary" style="font-weight:600;" data-label="{{ __('milk.total_milk') }}">{{ $entry ? number_format($entry->total_liters, 1) : '—' }}</td>
+                    <td data-label="{{ __('milk.notes') }}">{{ $entry?->notes ?? '—' }}</td>
+                </tr>
+                @empty
+                <tr><td colspan="5" class="text-center" style="padding:2rem;color:#94a3b8;">{{ __('milk.no_active_buffalo') }}</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </x-responsive-table>
+    @if($buffaloes->count() > 0)
+    <p class="text-muted mb-0" style="padding:12px 16px;font-size:0.875rem;">
+        {{ __('milk.total_buffaloes') }}: <strong>{{ $buffaloes->count() }}</strong>
+    </p>
+    @endif
+</x-form-card>
 @endsection
-
-@push('scripts')
-<script>
-function calcTotal(i) {
-    const m = parseFloat(document.querySelector(`[name="entries[${i}][morning_liters]"]`).value) || 0;
-    const e = parseFloat(document.querySelector(`[name="entries[${i}][evening_liters]"]`).value) || 0;
-    document.getElementById(`total-${i}`).textContent = (m + e).toFixed(1);
-}
-</script>
-@endpush

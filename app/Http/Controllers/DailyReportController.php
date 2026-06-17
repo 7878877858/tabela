@@ -6,7 +6,12 @@ use Illuminate\Http\Request;
 use App\Models\DailyReport;
 use App\Models\Buffalo;
 use App\Models\MilkEntry;
-use App\Models\employee;
+use App\Models\Employee;
+use App\Services\FeedStockService;
+use App\Services\MilkStockService;
+use App\Services\DailyReportSyncService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use App\Models\Feed;
 use App\Models\DailyReportStaff;
 use App\Models\DailyReportMilk;
@@ -16,21 +21,232 @@ use App\Models\DailyReportHealth;
 use App\Models\DailyReportVaccination;
 use App\Models\DailyReportExpense;
 use App\Models\DailyReportIncome;
+use App\Models\Expense;
+use App\Models\Income;
 
 
 class DailyReportController extends Controller
 {
+    public function __construct(
+        protected DailyReportSyncService $syncService
+    ) {
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //$reports = DailyReport::latest()->paginate(10);
-        $reports = DailyReport::orderBy('report_date', 'desc')->get();
+        $reports = DailyReport::orderByDesc('report_date')->paginate(20);
+        $totalAnimals = Buffalo::totalHeadCount(true);
+        $totalStaff = Employee::where('status', 'active')->count();
 
-        return view(
-            'Daily_Report.index',
-            compact('reports')
+        return view('Daily_Report.index', compact('reports', 'totalAnimals', 'totalStaff'));
+    }
+
+    protected function heatAnimalsCount(): int
+    {
+        return Buffalo::where('status', 'active')
+            ->whereNotNull('heat_date')
+            ->whereDate('heat_date', '>=', now()->subDays(21))
+            ->count();
+    }
+
+    protected function milkAnimalsForGrid()
+    {
+        return Buffalo::where('status', 'active')
+            ->whereIn('animal_type', Buffalo::ANIMAL_TYPES)
+            ->orderBy('tag_number')
+            ->get();
+    }
+
+    protected function feedAnimalsForGrid()
+    {
+        return Buffalo::where('status', 'active')
+            ->whereIn('animal_type', Buffalo::ANIMAL_TYPES)
+            ->orderBy('tag_number')
+            ->get();
+    }
+
+    protected function animalTypeCountsForReport(): array
+    {
+        return Buffalo::activeCountsByAnimalType(true);
+    }
+
+    protected function saveMilkGrid(DailyReport $report, Request $request): float
+    {
+        $grid = $request->input('milk_grid', []);
+        $reportDate = $request->report_date ?? $report->report_date;
+        $grandTotal = 0;
+
+        foreach ($grid as $buffaloId => $values) {
+            if (!$buffaloId) {
+                continue;
+            }
+
+            $morning = max(0, (float) ($values['morning'] ?? 0));
+            $evening = max(0, (float) ($values['evening'] ?? 0));
+
+            if ($morning <= 0 && $evening <= 0) {
+                continue;
+            }
+
+            $total = $morning + $evening;
+            $grandTotal += $total;
+
+            DailyReportMilk::create([
+                'daily_report_id' => $report->id,
+                'buffalo_id'      => $buffaloId,
+                'morning_milk'    => $morning,
+                'evening_milk'    => $evening,
+                'total_milk'      => $total,
+            ]);
+        }
+
+        return $grandTotal;
+    }
+
+    public function autosaveMilk(Request $request, string $id)
+    {
+        $report = DailyReport::findOrFail($id);
+
+        $request->validate([
+            'milk_grid'   => 'nullable|array',
+            'report_date' => 'nullable|date',
+        ]);
+
+        $summary = DB::transaction(function () use ($request, $report) {
+            $grid = $request->input('milk_grid', []);
+            $reportDate = $request->input('report_date', $report->report_date);
+
+            foreach ($grid as $buffaloId => $values) {
+                if (!$buffaloId) {
+                    continue;
+                }
+
+                $morning = max(0, (float) ($values['morning'] ?? 0));
+                $evening = max(0, (float) ($values['evening'] ?? 0));
+
+                if ($morning <= 0 && $evening <= 0) {
+                    DailyReportMilk::where('daily_report_id', $report->id)
+                        ->where('buffalo_id', $buffaloId)
+                        ->delete();
+
+                    continue;
+                }
+
+                $total = $morning + $evening;
+
+                DailyReportMilk::updateOrCreate(
+                    [
+                        'daily_report_id' => $report->id,
+                        'buffalo_id'      => $buffaloId,
+                    ],
+                    [
+                        'morning_milk' => $morning,
+                        'evening_milk' => $evening,
+                        'total_milk'   => $total,
+                    ]
+                );
+            }
+
+            return $this->syncService->syncMilkFromRequest($report->fresh(), $request);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Milk saved',
+            'summary' => $summary,
+        ]);
+    }
+
+    protected function validateFeedConsumption(Request $request): array
+    {
+        $grid = $request->input('feed_grid', []);
+        $feedConsumption = [];
+
+        foreach ($grid as $buffaloId => $periods) {
+            foreach (['morning', 'evening'] as $period) {
+                foreach (($periods[$period] ?? []) as $feedId => $qty) {
+                    $qty = (float) $qty;
+                    if ($qty < 0) {
+                        throw ValidationException::withMessages([
+                            'feed_stock' => 'ચારો જથ્થો negative દાખલ કરી શકાતો નથી.',
+                        ]);
+                    }
+                    if ($qty > 0) {
+                        $feedConsumption[(int) $feedId] = ($feedConsumption[(int) $feedId] ?? 0) + $qty;
+                    }
+                }
+            }
+        }
+
+        $feedsById = collect();
+        if (!empty($feedConsumption)) {
+            $feedsById = Feed::whereIn('id', array_keys($feedConsumption))->get()->keyBy('id');
+
+            foreach ($feedConsumption as $feedId => $requiredQty) {
+                $feed = $feedsById->get($feedId);
+                $available = $feed ? FeedStockService::currentBalance($feed) : 0;
+
+                if (!$feed || $available < $requiredQty) {
+                    $feedName = $feed?->name ?? ('Feed ' . $feedId);
+                    throw ValidationException::withMessages([
+                        'feed_stock' => $feedName . ' માટે પૂરતો સ્ટોક નથી. ઉપલબ્ધ: ' . number_format($available, 2) . ', જરૂરી: ' . number_format($requiredQty, 2),
+                    ]);
+                }
+            }
+        }
+
+        return compact('grid', 'feedConsumption', 'feedsById');
+    }
+
+    protected function saveFeedGrid(DailyReport $report, Request $request, $feedsById, array $feedConsumption): void
+    {
+        $grid = $request->input('feed_grid', []);
+
+        foreach ($grid as $buffaloId => $periods) {
+            if (!$buffaloId) {
+                continue;
+            }
+
+            $morningFeeds = [];
+            $eveningFeeds = [];
+            $rowTotal = 0;
+
+            foreach (($periods['morning'] ?? []) as $feedId => $qty) {
+                $qty = (float) $qty;
+                if ($qty > 0) {
+                    $morningFeeds[(string) $feedId] = $qty;
+                    $rowTotal += $qty;
+                }
+            }
+
+            foreach (($periods['evening'] ?? []) as $feedId => $qty) {
+                $qty = (float) $qty;
+                if ($qty > 0) {
+                    $eveningFeeds[(string) $feedId] = $qty;
+                    $rowTotal += $qty;
+                }
+            }
+
+            if ($rowTotal <= 0) {
+                continue;
+            }
+
+            DailyReportFeed::create([
+                'daily_report_id' => $report->id,
+                'buffalo_id'      => $buffaloId,
+                'morning_feeds'   => $morningFeeds,
+                'evening_feeds'   => $eveningFeeds,
+                'total_feed'      => $rowTotal,
+            ]);
+        }
+
+        FeedStockService::consumeFromDailyReportGrid(
+            $grid,
+            $request->report_date ?? $report->report_date->toDateString(),
+            $report->id
         );
     }
 
@@ -41,8 +257,9 @@ class DailyReportController extends Controller
     {
         $employees = Employee::all();
         $buffaloes = Buffalo::all();
-        $feeds = Feed::where('status', 1)->get();
-        $totalAnimals = Buffalo::count();
+        $feeds = Feed::where('status', 1)->withInventoryStats()->get();
+        $totalAnimals = Buffalo::totalHeadCount(true);
+        $animalTypeCounts = $this->animalTypeCountsForReport();
 
         $lactatingAnimals = Buffalo::where(
             'lactation_status',
@@ -78,6 +295,11 @@ class DailyReportController extends Controller
         }
 
         $reportNumber = 'REP-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        $heatAnimals = $this->heatAnimalsCount();
+        $feedAnimals = $this->feedAnimalsForGrid();
+        $feedRecords = collect();
+        $milkAnimals = $this->milkAnimalsForGrid();
+        $milkRecords = collect();
 
         return view(
             'Daily_Report.create',
@@ -86,12 +308,18 @@ class DailyReportController extends Controller
                 'committeeMembers',
                 'buffaloes',
                 'feeds',
+                'feedAnimals',
+                'feedRecords',
+                'milkAnimals',
+                'milkRecords',
                 'totalAnimals',
+                'animalTypeCounts',
                 'lactatingAnimals',
                 'pregnantAnimals',
                 'dryAnimals',
                 'totalMilk',
-                'reportNumber'
+                'reportNumber',
+                'heatAnimals'
             )
         );
     }
@@ -102,8 +330,14 @@ class DailyReportController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'report_date' => 'required',
+            'report_date' => 'required|date',
         ]);
+
+        $feedData = $this->validateFeedConsumption($request);
+        extract($feedData);
+
+        $report = DB::transaction(function () use ($request, $feedData) {
+        extract($feedData);
 
         $report = DailyReport::create([
             'report_date'   => $request->report_date,
@@ -138,6 +372,10 @@ class DailyReportController extends Controller
 
             foreach ($request->employee_id as $key => $employeeId) {
 
+                if (!$employeeId) {
+                    continue;
+                }
+
                 DailyReportStaff::create([
                     'daily_report_id' => $report->id,
                     'employee_id'     => $employeeId,
@@ -154,78 +392,17 @@ class DailyReportController extends Controller
     */
 
         // Milk
-        if ($request->buffalo_id) {
-
-            foreach ($request->buffalo_id as $key => $buffaloId) {
-
-                $morning = $request->morning_milk[$key] ?? 0;
-                $evening = $request->evening_milk[$key] ?? 0;
-
-                // Daily Report Milk
-                DailyReportMilk::create([
-                    'daily_report_id' => $report->id,
-                    'buffalo_id'      => $buffaloId,
-                    'morning_milk'    => $morning,
-                    'evening_milk'    => $evening,
-                    'total_milk'      => $morning + $evening,
-                ]);
-
-                // Milk History mate
-                MilkEntry::updateOrCreate(
-                    [
-                        'buffalo_id' => $buffaloId,
-                        'entry_date' => $request->report_date,
-                    ],
-                    [
-                        'morning_liters' => $morning,
-                        'evening_liters' => $evening,
-                        'total_liters'   => $morning + $evening,
-                        'notes'          => 'Daily Report',
-                    ]
-                );
-            }
-        }
+        $this->saveMilkGrid($report, $request);
 
         /*
     |--------------------------------------------------------------------------
     | Feed
     |--------------------------------------------------------------------------
     */
-
-        if ($request->morning_feed_type) {
-
-            foreach ($request->morning_feed_type as $key => $feed) {
-
-                DailyReportFeed::create([
-                    'daily_report_id' => $report->id,
-                    'buffalo_id'      => $request->feed_buffalo_id[$key] ?? null,
-                    'feed_name'       => $request->morning_feed_type[$key] ?? null,
-                    'quantity'        => $request->morning_qty[$key] ?? 0,
-                    'feed_time'       => 'morning',
-                    'unit'            => 'Kg',
-                ]);
-
-                DailyReportFeed::create([
-                    'daily_report_id' => $report->id,
-                    'buffalo_id'      => $request->feed_buffalo_id[$key] ?? null,
-                    'feed_name'       => $request->evening_feed_type[$key] ?? null,
-                    'quantity'        => $request->evening_qty[$key] ?? 0,
-                    'feed_time'       => 'evening',
-                    'unit'            => 'Kg',
-                ]);
-            }
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | Health section
-    |--------------------------------------------------------------------------
-    */
+        $this->saveFeedGrid($report, $request, $feedsById, $feedConsumption);
 
         if ($request->health_buffalo_id) {
-
             foreach ($request->health_buffalo_id as $key => $buffaloId) {
-
                 if (!$buffaloId) {
                     continue;
                 }
@@ -240,15 +417,11 @@ class DailyReportController extends Controller
             }
         }
 
-        /*
-    |--------------------------------------------------------------------------
-    | Pregnancy
-    |--------------------------------------------------------------------------
-    */
-
         if ($request->pregnancy_buffalo_id) {
-
             foreach ($request->pregnancy_buffalo_id as $key => $buffaloId) {
+                if (!$buffaloId) {
+                    continue;
+                }
 
                 DailyReportPregnancy::create([
                     'daily_report_id' => $report->id,
@@ -260,17 +433,8 @@ class DailyReportController extends Controller
             }
         }
 
-        /*
-|--------------------------------------------------------------------------
-| Vaccination
-|--------------------------------------------------------------------------
-*/
-
-        // Vaccination
         if ($request->vaccination_buffalo_id) {
-
             foreach ($request->vaccination_buffalo_id as $key => $buffaloId) {
-
                 if (!$buffaloId) {
                     continue;
                 }
@@ -285,16 +449,8 @@ class DailyReportController extends Controller
             }
         }
 
-        /*
-|--------------------------------------------------------------------------
-| Expense
-|--------------------------------------------------------------------------
-*/
-
         if ($request->expense_title) {
-
             foreach ($request->expense_title as $key => $title) {
-
                 if (!$title) {
                     continue;
                 }
@@ -308,16 +464,8 @@ class DailyReportController extends Controller
             }
         }
 
-        /*
-|--------------------------------------------------------------------------
-| Income
-|--------------------------------------------------------------------------
-*/
-
         if ($request->income_title) {
-
             foreach ($request->income_title as $key => $title) {
-
                 if (!$title) {
                     continue;
                 }
@@ -330,6 +478,11 @@ class DailyReportController extends Controller
                 ]);
             }
         }
+
+        $this->syncService->syncAll($report->fresh());
+
+        return $report;
+        });
 
         return redirect()
             ->route('daily-reports.index')
@@ -344,7 +497,7 @@ class DailyReportController extends Controller
         $dailyReport->load([
             'staff.employee',
             'milk',
-            'feed',
+            'feed.buffalo',
             'pregnancy.buffalo',
             'health.buffalo',
             'expenses',
@@ -353,7 +506,8 @@ class DailyReportController extends Controller
         ]);
 
         $births = Buffalo::whereNotNull('birth_date')->get();
-        $totalAnimals = Buffalo::count();
+        $totalAnimals = Buffalo::totalHeadCount(true);
+        $animalTypeCounts = $this->animalTypeCountsForReport();
 
         $lactatingAnimals = Buffalo::where(
             'lactation_status',
@@ -374,6 +528,10 @@ class DailyReportController extends Controller
             'entry_date',
             $dailyReport->report_date
         )->sum('total_liters');
+
+        $heatAnimals = $this->heatAnimalsCount();
+        $feeds = Feed::where('status', 1)->withInventoryStats()->get();
+
         return view(
             'Daily_Report.show',
             compact(
@@ -383,7 +541,9 @@ class DailyReportController extends Controller
                 'pregnantAnimals',
                 'dryAnimals',
                 'totalMilk',
-                'births'
+                'births',
+                'heatAnimals',
+                'feeds'
             )
         );
     }
@@ -405,9 +565,10 @@ class DailyReportController extends Controller
         ])->findOrFail($id);
         $employees = Employee::all();
         $buffaloes = Buffalo::all();
-        $feeds = Feed::where('status', 1)->get();
+        $feeds = Feed::where('status', 1)->withInventoryStats()->get();
 
-        $totalAnimals = Buffalo::count();
+        $totalAnimals = Buffalo::totalHeadCount(true);
+        $animalTypeCounts = $this->animalTypeCountsForReport();
 
         $lactatingAnimals = Buffalo::where(
             'lactation_status',
@@ -433,6 +594,12 @@ class DailyReportController extends Controller
         )->get();
 
         $totalMilk = MilkEntry::sum('total_liters');
+        $heatAnimals = $this->heatAnimalsCount();
+        $feedAnimals = $this->feedAnimalsForGrid();
+        $feedRecords = $report->feed->keyBy('buffalo_id');
+        $milkAnimals = $this->milkAnimalsForGrid();
+        $milkRecords = $report->milk->keyBy('buffalo_id');
+
         return view(
             'Daily_Report.edit',
             compact(
@@ -441,11 +608,17 @@ class DailyReportController extends Controller
                 'committeeMembers',
                 'buffaloes',
                 'feeds',
+                'feedAnimals',
+                'feedRecords',
+                'milkAnimals',
+                'milkRecords',
                 'totalAnimals',
+                'animalTypeCounts',
                 'lactatingAnimals',
                 'pregnantAnimals',
                 'dryAnimals',
-                'totalMilk'
+                'totalMilk',
+                'heatAnimals'
             )
         );
     }
@@ -457,7 +630,16 @@ class DailyReportController extends Controller
     {
         $report = DailyReport::findOrFail($id);
         $oldDate = $report->report_date;
-        // Main Report
+
+        FeedStockService::restoreDailyReport($report->id);
+        $this->syncService->purgeSynced($report->id);
+
+        $feedData = $this->validateFeedConsumption($request);
+        extract($feedData);
+
+        DB::transaction(function () use ($request, $report, $oldDate, $feedData) {
+        extract($feedData);
+
         $report->update([
             'report_date'   => $request->report_date,
             'shift'         => $request->shift,
@@ -487,16 +669,17 @@ class DailyReportController extends Controller
         DailyReportFeed::where('daily_report_id', $report->id)->delete();
         DailyReportPregnancy::where('daily_report_id', $report->id)->delete();
         DailyReportHealth::where('daily_report_id', $report->id)->delete();
-        MilkEntry::whereDate(
-            'entry_date',
-            $oldDate
-        )->whereIn(
-            'buffalo_id',
-            $request->buffalo_id ?? []
-        )->delete();
+        DailyReportVaccination::where('daily_report_id', $report->id)->delete();
+        DailyReportExpense::where('daily_report_id', $report->id)->delete();
+        DailyReportIncome::where('daily_report_id', $report->id)->delete();
+
         // Staff
         if ($request->employee_id) {
             foreach ($request->employee_id as $key => $employeeId) {
+
+                if (!$employeeId) {
+                    continue;
+                }
 
                 DailyReportStaff::create([
                     'daily_report_id' => $report->id,
@@ -508,68 +691,17 @@ class DailyReportController extends Controller
         }
 
         // Milk
-        if ($request->buffalo_id) {
-            foreach ($request->buffalo_id as $key => $buffaloId) {
+        $this->saveMilkGrid($report, $request);
 
-                $morning = $request->morning_milk[$key] ?? 0;
-                $evening = $request->evening_milk[$key] ?? 0;
-
-                DailyReportMilk::create([
-                    'daily_report_id' => $report->id,
-                    'buffalo_id'      => $buffaloId,
-                    'morning_milk'    => $morning,
-                    'evening_milk'    => $evening,
-                    'total_milk'      => $morning + $evening,
-                ]);
-
-                // Milk History update
-                MilkEntry::updateOrCreate(
-                    [
-                        'buffalo_id' => $buffaloId,
-                        'entry_date' => $report->report_date,
-                    ],
-                    [
-                        'morning_liters' => $morning,
-                        'evening_liters' => $evening,
-                        'total_liters'   => $morning + $evening,
-                    ]
-                );
-            }
-        }
-
-        // Feed
-        if ($request->morning_feed_type) {
-            foreach ($request->morning_feed_type as $key => $feed) {
-
-                // Morning Feed
-                if (!empty($request->morning_feed_type[$key])) {
-                    DailyReportFeed::create([
-                        'daily_report_id' => $report->id,
-                        'buffalo_id'      => $request->feed_buffalo_id[$key],
-                        'feed_name'       => $request->morning_feed_type[$key],
-                        'quantity'        => $request->morning_qty[$key] ?? 0,
-                        'feed_time'       => 'morning',
-                        'unit'            => 'Kg',
-                    ]);
-                }
-
-                // Evening Feed
-                if (!empty($request->evening_feed_type[$key])) {
-                    DailyReportFeed::create([
-                        'daily_report_id' => $report->id,
-                        'buffalo_id'      => $request->feed_buffalo_id[$key],
-                        'feed_name'       => $request->evening_feed_type[$key],
-                        'quantity'        => $request->evening_qty[$key] ?? 0,
-                        'feed_time'       => 'evening',
-                        'unit'            => 'Kg',
-                    ]);
-                }
-            }
-        }
+        $this->saveFeedGrid($report, $request, $feedsById, $feedConsumption);
 
         // Pregnancy
         if ($request->pregnancy_buffalo_id) {
             foreach ($request->pregnancy_buffalo_id as $key => $buffaloId) {
+
+                if (!$buffaloId) {
+                    continue;
+                }
 
                 DailyReportPregnancy::create([
                     'daily_report_id' => $report->id,
@@ -597,9 +729,24 @@ class DailyReportController extends Controller
             }
         }
 
-        // Expanse
-        DailyReportExpense::where('daily_report_id', $report->id)->delete();
+        // Vaccination
+        if ($request->vaccination_buffalo_id) {
+            foreach ($request->vaccination_buffalo_id as $key => $buffaloId) {
+                if (!$buffaloId) {
+                    continue;
+                }
 
+                DailyReportVaccination::create([
+                    'daily_report_id'  => $report->id,
+                    'buffalo_id'       => $buffaloId,
+                    'vaccine_name'     => $request->vaccine_name[$key] ?? '',
+                    'vaccination_date' => $request->vaccination_date[$key] ?? null,
+                    'remarks'          => $request->vaccination_remarks[$key] ?? '',
+                ]);
+            }
+        }
+
+        // Expense
         if ($request->expense_title) {
 
             foreach ($request->expense_title as $key => $title) {
@@ -617,8 +764,7 @@ class DailyReportController extends Controller
             }
         }
 
-        //Income
-        DailyReportIncome::where('daily_report_id', $report->id)->delete();
+        // Income
         if ($request->income_title) {
 
             foreach ($request->income_title as $key => $title) {
@@ -636,9 +782,18 @@ class DailyReportController extends Controller
             }
         }
 
+        $this->syncService->syncAll($report->fresh());
+
+        });
+
         return redirect()
             ->route('daily-reports.index')
             ->with('success', 'Report Updated Successfully');
+    }
+
+    public function print(DailyReport $dailyReport)
+    {
+        return redirect()->route('daily-reports.show', $dailyReport)->withFragment('print');
     }
 
     /**
@@ -646,7 +801,10 @@ class DailyReportController extends Controller
      */
     public function destroy(string $id)
     {
-        DailyReport::findOrFail($id)->delete();
+        $report = DailyReport::findOrFail($id);
+        FeedStockService::restoreDailyReport($report->id);
+        $this->syncService->purgeSynced($report->id);
+        $report->delete();
 
         return redirect()
             ->route('daily-reports.index')

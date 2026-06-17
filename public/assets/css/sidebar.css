@@ -1,0 +1,295 @@
+/**
+ * ERP Sidebar — Dairy Farm Management
+ */
+:root {
+    --sb-width: 260px;
+    --sb-bg: #1e293b;
+    --sb-hover: #334155;
+    --sb-text: #f8fafc;
+    --sb-muted: #94a3b8;
+    --sb-active-border: #60a5fa;
+    --sb-active-glow: rgba(59, 130, 246, 0.35);
+}
+
+/* ─── Shell ─── */
+.erp-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sb-width);
+    height: 100vh;
+    background: var(--sb-bg);
+    color: var(--sb-text);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.12);
+}
+
+.erp-sidebar__brand {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 14px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.erp-sidebar__logo {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px var(--sb-active-glow);
+}
+
+.erp-sidebar__brand-text {
+    min-width: 0;
+}
+
+.erp-sidebar__brand-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--sb-text);
+    line-height: 1.25;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.erp-sidebar__brand-sub {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--sb-muted);
+    margin: 2px 0 0;
+    line-height: 1.3;
+}
+
+/* ─── Nav scroll area ─── */
+.erp-sidebar__nav {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px 10px 12px;
+    scrollbar-width: thin;
+    scrollbar-color: #475569 transparent;
+}
+
+.erp-sidebar__nav::-webkit-scrollbar {
+    width: 5px;
+}
+
+.erp-sidebar__nav::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+}
+
+/* ─── Links ─── */
+.erp-sidebar__link,
+.erp-sidebar__sublink {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: var(--sb-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.25;
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+    margin-bottom: 2px;
+}
+
+.erp-sidebar__link i,
+.erp-sidebar__sublink i.bi {
+    font-size: 16px;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.erp-sidebar__link:hover,
+.erp-sidebar__sublink:hover {
+    background: var(--sb-hover);
+    color: var(--sb-text);
+    text-decoration: none;
+}
+
+.erp-sidebar__link.is-active,
+.erp-sidebar__sublink.is-active {
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.45) 0%, rgba(59, 130, 246, 0.2) 100%);
+    color: #fff;
+    font-weight: 600;
+    border-left-color: var(--sb-active-border);
+    box-shadow: inset 0 0 20px var(--sb-active-glow);
+}
+
+/* ─── Groups ─── */
+.erp-sidebar__group {
+    margin-bottom: 2px;
+}
+
+.erp-sidebar__group-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--sb-muted);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.erp-sidebar__group-toggle i.bi:first-child {
+    font-size: 16px;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.erp-sidebar__group-toggle span {
+    flex: 1;
+    min-width: 0;
+}
+
+.erp-sidebar__chevron {
+    font-size: 11px !important;
+    width: auto !important;
+    opacity: 0.7;
+    transition: transform 0.25s ease;
+}
+
+.erp-sidebar__group.is-open .erp-sidebar__chevron {
+    transform: rotate(180deg);
+}
+
+.erp-sidebar__group-toggle:hover {
+    background: var(--sb-hover);
+    color: var(--sb-text);
+}
+
+.erp-sidebar__group.is-active > .erp-sidebar__group-toggle {
+    color: var(--sb-text);
+}
+
+.erp-sidebar__group-items {
+    display: none;
+    padding: 2px 0 4px 8px;
+}
+
+.erp-sidebar__group.is-open .erp-sidebar__group-items {
+    display: block;
+}
+
+.erp-sidebar__sublink {
+    padding: 8px 14px 8px 32px;
+    min-height: 36px;
+    font-size: 12.5px;
+    font-weight: 500;
+    margin-bottom: 1px;
+}
+
+/* ─── Footer ─── */
+.erp-sidebar__footer {
+    flex-shrink: 0;
+    padding: 10px;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.erp-sidebar__logout {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--sb-muted);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.erp-sidebar__logout:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+}
+
+.erp-sidebar__logout i {
+    font-size: 16px;
+    width: 18px;
+    text-align: center;
+}
+
+/* ─── Backdrop ─── */
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    z-index: 99;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-backdrop.is-open {
+    display: block;
+    opacity: 1;
+}
+
+/* ─── Main offset ─── */
+.main {
+    margin-left: var(--sb-width);
+}
+
+/* ─── Mobile ─── */
+@media (max-width: 768px) {
+    :root {
+        --sb-width: 280px;
+    }
+
+    .erp-sidebar {
+        transform: translateX(-100%);
+        z-index: 101;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .erp-sidebar.is-open {
+        transform: translateX(0);
+    }
+
+    .main {
+        margin-left: 0;
+    }
+
+    .erp-sidebar__nav {
+        padding: 6px 8px 10px;
+    }
+
+    .erp-sidebar__brand {
+        padding: 14px 12px;
+    }
+}

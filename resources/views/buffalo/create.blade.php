@@ -24,30 +24,49 @@
     }
 </style>
 @section('content')
-<div class="page-header">
-    <h2>{{ isset($buffalo) ? '✏️ '.__('buffalo.edit_buffalo').' — '.$buffalo->tag_number : '➕ '.__('buffalo.new_buffalo') }}</h2>
-    <a href="{{ route('buffalo.index') }}" class="btn btn-ghost btn-sm">← {{ __('buffalo.back') }}</a>
-</div>
+
+<x-section-header :title="isset($buffalo) ? __('buffalo.edit_buffalo') . ' — ' . $buffalo->tag_number : __('buffalo.new_buffalo')" :icon="isset($buffalo) ? '✏️' : '➕'">
+    <x-slot:actions>
+        <a href="{{ route('buffalo.index') }}" class="btn btn-ghost btn-sm">← {{ __('buffalo.back') }}</a>
+    </x-slot:actions>
+</x-section-header>
 
 <form class="buffalo-layout" method="POST" action="{{ isset($buffalo) ? route('buffalo.update',$buffalo) : route('buffalo.store') }}">
 
-    <div class="card" style="max-width:640px;">
+    <x-form-card :title="__('buffalo.new_buffalo')" icon="🐃">
 
         @csrf
         @if(isset($buffalo)) @method('PUT') @endif
 
         <div class="grid-2">
             <div class="form-group">
-                <label class="form-label">{{ __('buffalo.tag_number') }} *</label>
-                <input type="text" name="tag_number" class="form-control" value="{{ old('tag_number', $buffalo->tag_number ?? '') }}" placeholder="{{ __('buffalo.tag_number_placeholder') }}" required>
+                <label class="form-label">પશુ પ્રકાર *</label>
+                @if(isset($buffalo))
+                    <input type="text" class="form-control" value="{{ $buffalo->animal_type_label }}" readonly>
+                @else
+                    <select name="animal_type" id="animalTypeSelect" class="form-control" required>
+                        @foreach(\App\Models\Buffalo::animalTypeOptions() as $value => $label)
+                        <option value="{{ $value }}" {{ old('animal_type', 'buffalo') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                @endif
             </div>
             <div class="form-group">
-                <label class="form-label">{{ __('buffalo.optional_name') }}</label>
-                <input type="text" name="name" class="form-control" value="{{ old('name', $buffalo->name ?? '') }}" placeholder="{{ __('buffalo.name_placeholder') }}">
+                <label class="form-label">{{ __('buffalo.tag_number') }}</label>
+                @if(isset($buffalo))
+                    <input type="text" class="form-control" value="{{ $buffalo->tag_number }}" readonly>
+                @else
+                    <input type="text" id="tagPreview" class="form-control" value="{{ ($nextTags ?? [])[old('animal_type', 'buffalo')] ?? 'B001' }}" readonly>
+                    <small style="color:#6b7280;">ટેગ આપમેળે જનરેટ થશે</small>
+                @endif
             </div>
         </div>
 
         <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">{{ __('buffalo.optional_name') }}</label>
+                <input type="text" name="name" class="form-control" value="{{ old('name', $buffalo->name ?? '') }}" placeholder="{{ __('buffalo.name_placeholder') }}">
+            </div>
             <div class="form-group">
                 <label class="form-label">{{ __('buffalo.status') }}</label>
                 <select name="status" class="form-control">
@@ -88,10 +107,9 @@
         </div>
 
 
-    </div>
+    </x-form-card>
 
-    <div class="card" style="max-width:640px;">
-        <h3>🤰 પ્રજનન માહિતી</h3>
+    <x-form-card title="પ્રજનન માહિતી" icon="🤰">
         <div class="grid-2">
             <div class="form-group">
                 <label class="form-label">Heat તારીખ</label>
@@ -121,22 +139,36 @@
                     value="{{ old('expected_delivery_date', isset($buffalo) ? $buffalo->expected_delivery_date : '') }}">
             </div>
         </div>
+        @if(!isset($buffalo) || in_array($buffalo->normalized_animal_type, ['buffalo', 'cow']))
         <h3>🐄 બચ્ચા જન્મ માહિતી</h3>
+        @php
+            $linkedCalf = isset($buffalo) ? $buffalo->birthCalf : null;
+            $birthDateValue = old('birth_date', isset($buffalo) ? ($linkedCalf?->birth_date?->format('Y-m-d') ?? $buffalo->birth_date?->format('Y-m-d')) : '');
+            $calfGenderValue = old('calf_gender', isset($buffalo) ? ($linkedCalf?->gender ?? $buffalo->calf_gender) : '');
+            $calfWeightValue = old('calf_weight', isset($buffalo) ? ($linkedCalf?->weight ?? $buffalo->calf_weight) : '');
+        @endphp
         <div class="grid-2">
             <div class="form-group">
                 <label class="form-label">Birth તારીખ</label>
                 <input type="date"
                     name="birth_date"
                     class="form-control"
-                    value="{{ old('birth_date', isset($buffalo) ? $buffalo->birth_date : '') }}">
+                    value="{{ $birthDateValue }}">
             </div>
 
             <div class="form-group">
-                <label class="form-label">Calf Tag Number</label>
-                <input type="text"
-                    name="calf_tag_number"
-                    class="form-control"
-                    value="{{ old('calf_tag_number', $buffalo->calf_tag_number ?? '') }}">
+                <label class="form-label">બચ્ચા ટેગ</label>
+                @if($linkedCalf)
+                    <input type="text" class="form-control" value="{{ $linkedCalf->tag_number }}" readonly>
+                    <small style="color:#6b7280;display:block;margin-top:6px;">
+                        <a href="{{ route('buffalo.show', $linkedCalf) }}">બચ્ચા પ્રોફાઇલ જુઓ</a>
+                    </small>
+                @else
+                    <input type="text" class="form-control" value="સેવ પછી BC/CC ટેગ આપમેળે બનશે" readonly>
+                    <small style="color:#6b7280;display:block;margin-top:6px;">
+                        જન્મ તારીખ ભરો — ભેંસ માટે BC001, ગાય માટે CC001 ટેગ આપમેળે મળશે.
+                    </small>
+                @endif
             </div>
         </div>
 
@@ -146,11 +178,11 @@
                 <select name="calf_gender" class="form-control">
                     <option value="">Select Gender</option>
                     <option value="male"
-                        {{ old('calf_gender', $buffalo->calf_gender ?? '') == 'male' ? 'selected' : '' }}>
+                        {{ $calfGenderValue == 'male' ? 'selected' : '' }}>
                         Male
                     </option>
                     <option value="female"
-                        {{ old('calf_gender', $buffalo->calf_gender ?? '') == 'female' ? 'selected' : '' }}>
+                        {{ $calfGenderValue == 'female' ? 'selected' : '' }}>
                         Female
                     </option>
                 </select>
@@ -159,16 +191,42 @@
             <div class="form-group">
                 <label class="form-label">Calf Weight (Kg)</label>
                 <input type="number"
-                    step="0.01" name="calf_weight" class="form-control" value="{{ old('calf_weight', $buffalo->calf_weight ?? '') }}">
+                    step="0.01" name="calf_weight" class="form-control" value="{{ $calfWeightValue }}">
             </div>
         </div>
-    </div>
-    <div class="form-actions">
+        @endif
+    </x-form-card>
+    <div class="form-actions" style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
         <button type="submit" class="btn btn-primary">
             {{ isset($buffalo) ? '💾 '.__('buffalo.update') : '➕ '.__('buffalo.save') }}
         </button>
         <a href="{{ route('buffalo.index') }}" class="btn btn-ghost">{{ __('buffalo.cancel') }}</a>
     </div>
 </form>
+
+@if(!isset($buffalo))
+@push('scripts')
+<script>
+(function () {
+    const select = document.getElementById('animalTypeSelect');
+    const preview = document.getElementById('tagPreview');
+    if (!select || !preview) return;
+
+    const nextTags = @json($nextTags ?? []);
+
+    function updatePreview(type) {
+        preview.value = nextTags[type] || '—';
+    }
+
+    select.addEventListener('change', function () {
+        fetch(`{{ route('buffalo.next-tag') }}?animal_type=${encodeURIComponent(this.value)}`)
+            .then(r => r.json())
+            .then(data => { preview.value = data.tag_number || '—'; })
+            .catch(() => updatePreview(this.value));
+    });
+})();
+</script>
+@endpush
+@endif
 
 @endsection

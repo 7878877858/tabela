@@ -4,156 +4,63 @@
 
 @section('content')
 
-<div class="container-fluid">
+<div class="daily-report-list-page">
 
-    <!-- Header -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body d-flex justify-content-between align-items-center">
+<x-section-header title="દૈનિક સ્ટાફ કાર્ય અહેવાલ" icon="📋" subtitle="Daily Dairy Farm Report Management">
+    <x-slot:actions>
+        <a href="{{ route('daily-reports.create') }}" class="btn btn-success">➕ નવો અહેવાલ</a>
+    </x-slot:actions>
+</x-section-header>
 
-            <div>
-                <h3 class="fw-bold mb-1">
-                    📋 દૈનિક સ્ટાફ કાર્ય અહેવાલ
-                </h3>
-                <small class="text-muted">
-                    Daily Dairy Farm Report Management
-                </small>
-            </div>
+<div class="ds-stats-grid ds-stats-grid-4">
+    <x-stat-card color="blue" icon="📋" label="કુલ રિપોર્ટ" :value="$reports->total()" />
+    <x-stat-card color="green" icon="📅" label="આજની તારીખ" :value="now()->format('d')" />
+    <x-stat-card color="orange" icon="🐄" label="કુલ પશુ" :value="$totalAnimals" />
+    <x-stat-card color="red" icon="👷" label="કુલ કર્મચારી" :value="$totalStaff" />
+</div>
 
-            <a href="{{ route('daily-reports.create') }}"
-                class="btn btn-success">
-                <i class="fa fa-plus"></i>
-                નવો અહેવાલ
-            </a>
-
-        </div>
-    </div>
-
-    <!-- Statistics -->
-    <div class="row mb-4">
-
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center">
-                    <h2 class="text-primary fw-bold">
-                        {{ $reports->count() }}
-                    </h2>
-                    <small>કુલ રિપોર્ટ</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center">
-                    <h2 class="text-success fw-bold">
-                        {{ date('d') }}
-                    </h2>
-                    <small>આજની તારીખ</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center">
-                    <h2 class="text-warning fw-bold">
-                        0
-                    </h2>
-                    <small>કુલ પશુ</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center">
-                    <h2 class="text-danger fw-bold">
-                        0
-                    </h2>
-                    <small>કુલ કર્મચારી</small>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Reports Table -->
-
-    <div class="card shadow-sm border-0">
-
-        <div class="card-header bg-white">
-
-            <h5 class="mb-0">
-                📑 રિપોર્ટ યાદી
-            </h5>
-
-        </div>
-
-        <div class="card-body">
-
-            <div class="table-responsive">
-
-                <table class="table table-bordered align-middle">
-
-                    <thead class="table-light">
-
-                        <tr>
-
-                            <th>#</th>
-                            <th>તારીખ</th>
-                            <th>શિફ્ટ</th>
-                            <th>અહેવાલ નંબર</th>
-                            <th>બનાવનાર</th>
-                            <th width="180">Action</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        @forelse($reports as $report)
-
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ date('d-m-Y', strtotime($report->report_date)) }}</td>
-                            <td>{{ $report->shift }}</td>
-                            <td>DR-{{ $report->id }}</td>
-                            <td>Admin</td>
-
-                            <td>
-                                <a href="{{ route('daily-reports.show',$report->id) }}"
-                                    class="btn btn-sm btn-primary">
-                                    View
-                                </a>
-
-                                <a href="{{ route('daily-reports.edit',$report->id) }}"
-                                    class="btn btn-sm btn-warning">
-                                    Edit
-                                </a>
-                            </td>
-                        </tr>
-
-                        @empty
-
-                        <tr>
-                            <td colspan="6" class="text-center">
-                                No Reports Found
-                            </td>
-                        </tr>
-
-                        @endforelse
-
-                    </tbody>
-
-                </table>
-
-
-            </div>
-
-        </div>
-
-    </div>
+<x-form-card title="રિપોર્ટ યાદી" icon="📑" :flush="true">
+    <x-responsive-table>
+        <table class="ds-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>તારીખ</th>
+                    <th>શિફ્ટ</th>
+                    <th>અહેવાલ નંબર</th>
+                    <th>બનાવનાર</th>
+                    <th class="action-column">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($reports as $report)
+                <tr class="dr-list-row">
+                    <td data-label="#">{{ $reports->firstItem() + $loop->index }}</td>
+                    <td data-label="તારીખ">{{ $report->report_date->format('d-m-Y') }}</td>
+                    <td data-label="શિફ્ટ">{{ $report->shift ?? '—' }}</td>
+                    <td data-label="અહેવાલ">{{ $report->report_number ?? ('DR-' . $report->id) }}</td>
+                    <td data-label="બનાવનાર">{{ $report->reporter ?? '—' }}</td>
+                    <td data-label="" class="dr-row-actions action-column">
+                        <div class="dr-action-group action-buttons">
+                            <a href="{{ route('daily-reports.show', $report) }}" class="btn btn-outline btn-sm dr-action-btn" title="View">👁</a>
+                            <a href="{{ route('daily-reports.edit', $report) }}" class="btn btn-ghost btn-sm dr-action-btn" title="Edit">✏️</a>
+                            <form method="POST" action="{{ route('daily-reports.destroy', $report) }}" class="dr-action-form action-form" onsubmit="return confirm('શું તમે ખરેખર ડિલીટ કરવા માંગો છો?')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm dr-action-btn" title="Delete">🗑</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr><td colspan="6" class="text-center" style="padding:2rem;color:#94a3b8;">કોઈ અહેવાલ નથી</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </x-responsive-table>
+</x-form-card>
+@if($reports->hasPages())
+<div class="card" style="margin-top:12px;padding:12px 16px;">{{ $reports->links() }}</div>
+@endif
 
 </div>
 

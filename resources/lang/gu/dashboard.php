@@ -37,6 +37,7 @@ return [
     'today_milk_entry' => 'આજની દૂધ એન્ટ્રી',
 
     'add_expense' => 'ખર્ચ ઉમેરો',
+    'add_income' => 'આવક ઉમેરો',
 
     'sale_entry' => 'વેચાણ એન્ટ્રી',
 

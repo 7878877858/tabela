@@ -3,13 +3,13 @@
 
 @section('content')
 
-<div class="page-header">
-    <h2>📋 {{ __('milk.milk_history') }}</h2>
-    <a href="{{ route('milk.index') }}" class="btn btn-outline btn-sm">➕ {{ __('milk.milk_entry') }}</a>
-</div>
+<x-section-header :title="__('milk.milk_history')" icon="📋">
+    <x-slot:actions>
+        <a href="{{ route('milk.index') }}" class="btn btn-outline btn-sm">🥛 {{ __('milk.milk_entry') }}</a>
+    </x-slot:actions>
+</x-section-header>
 
-{{-- Filter --}}
-<div class="card" style="margin-bottom:16px; padding:14px 20px;">
+<x-form-card :title="__('milk.milk_history')" icon="🔍">
     <form method="GET" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
         
         <label>{{ __('milk.month') }}:</label>
@@ -33,12 +33,11 @@
         </span>
 
     </form>
-</div>
+</x-form-card>
 
-{{-- Table --}}
-<div class="card">
-    <div class="table-wrap">
-        <table>
+<x-form-card :title="__('milk.milk_history')" icon="📋" :flush="true">
+    <x-responsive-table>
+        <table class="ds-table">
             <thead>
                 <tr>
                     <th>{{ __('milk.date') }}</th>
@@ -66,7 +65,7 @@
                 @endforelse
             </tbody>
         </table>
-    </div>
-</div>
+    </x-responsive-table>
+</x-form-card>
 
 @endsection

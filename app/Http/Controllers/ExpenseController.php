@@ -33,21 +33,17 @@ class ExpenseController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'expense_date' => 'required|date',
-            'category'     => 'required|in:feed,medicine,labour,equipment,veterinary,other',
-            'description'  => 'required|string',
-            'amount'       => 'required|numeric|min:0',
-            'buffalo_id'   => 'nullable|exists:buffaloes,id',
-        ]);
-
-        Expense::create($request->all());
-        return back()->with('success', 'ખર્ચ ઉમેરાયો!');
+        return back()->with('error', 'ખર્ચ માત્ર દૈનિક અહેવાલમાંથી દાખલ કરો (Feed stock-in અલગ રહેશે).');
     }
 
     public function destroy(Expense $expense)
     {
+        if ($expense->daily_report_id) {
+            return back()->with('error', 'આ ખર્ચ દૈનિક અહેવાલમાંથી ડિલીટ કરો.');
+        }
+
         $expense->delete();
+
         return back()->with('success', 'ખર્ચ ડિલીટ થયો.');
     }
 }

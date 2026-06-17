@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Meeting;
 use App\Models\User;
-use App\Models\employee;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 
 class MeetingController extends Controller
@@ -22,7 +22,7 @@ class MeetingController extends Controller
     public function create()
     {
         $users = User::all();
-        $employees = employee::all();
+        $employees = Employee::all();
             // print_r($users);
             // print_r($employees);
         return view(
@@ -88,7 +88,7 @@ class MeetingController extends Controller
     public function edit(Meeting $meeting)
     {
         $users = User::all();
-        $employees = employee::all();
+        $employees = Employee::all();
         return view(
             'meetings.edit',
             compact('meeting','users', 'employees')
@@ -115,6 +115,17 @@ class MeetingController extends Controller
         'meeting_link' => $request->meeting_link,
         'status'       => $request->status,
     ]);
+
+    if ($request->participants) {
+        $userIds = [];
+        foreach ($request->participants as $participant) {
+            [$type, $id] = explode('_', $participant);
+            if ($type === 'user') {
+                $userIds[] = (int) $id;
+            }
+        }
+        $meeting->participants()->sync($userIds);
+    }
 
     return redirect()
         ->route('meetings.index')

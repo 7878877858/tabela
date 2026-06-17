@@ -5,7 +5,13 @@ use Illuminate\Database\Eloquent\Model;
 class Expense extends Model
 {
     protected $fillable = [
-        'expense_date','category','description','amount','buffalo_id','notes'
+        'daily_report_id',
+        'expense_date',
+        'category',
+        'description',
+        'amount',
+        'buffalo_id',
+        'notes',
     ];
     protected $casts = ['expense_date' => 'date'];
 

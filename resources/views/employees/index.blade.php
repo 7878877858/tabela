@@ -2,11 +2,10 @@
 @section('title', __('employee.employees'))
 
 @section('content')
-<div class="page-header"><h2>👷 {{ __('employee.employees') }}</h2></div>
 
-{{-- Add employee --}}
-<div class="card" style="margin-bottom:20px;">
-    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">{{ __('employee.new_employee') }}</h3>
+<x-section-header :title="__('employee.employees')" icon="👷" />
+
+<x-form-card :title="__('employee.new_employee')" icon="➕">
     <form method="POST" action="{{ route('employees.store') }}">
         @csrf
         <div class="grid-3">
@@ -40,11 +39,11 @@
        
         <button type="submit" class="btn btn-primary">➕ {{ __('employee.add') }}</button>
     </form>
-</div>
+</x-form-card>
 
 {{-- List --}}
 @foreach($employees as $emp)
-<div class="card" style="margin-bottom:16px;">
+<x-form-card style="margin-bottom:16px;">
     <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
         <div>
             <h3 style="font-size:16px; font-weight:700;">
@@ -111,7 +110,7 @@
             
         </form>
     </div>
-</div>
+</x-form-card>
 @endforeach
 
 <div style="margin-top:16px;">{{ $employees->links() }}</div>

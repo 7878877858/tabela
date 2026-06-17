@@ -2,9 +2,15 @@
 @section('title', __('kharch.expense'))
 
 @section('content')
-<div class="page-header"><h2>💸 {{ __('kharch.expense') }}</h2></div>
 
-{{-- Add form --}}
+<x-section-header :title="__('kharch.expense')" icon="💸" />
+
+<div class="alert alert-warning">
+    📋 <strong>Read-only report view</strong> — operational expenses sync from <a href="{{ route('daily-reports.create') }}">Daily Report</a>. Feed purchases via Feed stock-in remain separate.
+</div>
+
+{{-- Add form disabled: use Daily Report --}}
+@if(false)
 <div class="card" style="margin-bottom:20px;">
     <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">{{ __('kharch.add_expense') }}</h3>
     <form method="POST" action="{{ route('kharch.store') }}">
@@ -48,6 +54,7 @@
         <button type="submit" class="btn btn-primary">➕ {{ __('kharch.add') }}</button>
     </form>
 </div>
+@endif
 
 {{-- Filter --}}
 <form method="GET" style="display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
@@ -81,9 +88,9 @@
 </div>
 
 {{-- Table --}}
-<div class="card">
-    <div class="table-wrap">
-        <table>
+<x-form-card :title="__('kharch.expense')" icon="📋" :flush="true">
+    <x-responsive-table>
+        <table class="ds-table">
             <thead>
                 <tr><th>{{ __('kharch.date') }}</th><th>{{ __('kharch.category') }}</th><th>{{ __('kharch.description') }}</th><th>{{ __('kharch.buffalo') }}</th><th>{{ __('kharch.amount') }} (₹)</th><th></th></tr>
             </thead>
@@ -96,10 +103,14 @@
                     <td>{{ $e->buffalo?->tag_number ?? '—' }}</td>
                     <td><strong>₹{{ number_format($e->amount,0) }}</strong></td>
                     <td>
+                        @if(!$e->daily_report_id)
                         <form method="POST" action="{{ route('kharch.destroy',$e) }}" onsubmit="return confirm('{{ __('kharch.delete_confirm') }}')">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm">🗑</button>
                         </form>
+                        @else
+                        <span class="text-muted" style="font-size:11px;">Daily Report</span>
+                        @endif
                     </td>
                 </tr>
                 @empty
@@ -107,7 +118,7 @@
                 @endforelse
             </tbody>
         </table>
-    </div>
-    <div style="margin-top:16px;">{{ $expenses->links() }}</div>
-</div>
+    </x-responsive-table>
+    <div style="padding:12px 16px;">{{ $expenses->links() }}</div>
+</x-form-card>
 @endsection

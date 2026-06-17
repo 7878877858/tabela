@@ -29,6 +29,10 @@ class DailyReport extends Model
         'clean_store_note',
     ];
 
+    protected $casts = [
+        'report_date' => 'date',
+    ];
+
     public function staff()
     {
         return $this->hasMany(DailyReportStaff::class);
@@ -67,5 +71,35 @@ class DailyReport extends Model
     public function vaccinations()
     {
         return $this->hasMany(DailyReportVaccination::class);
+    }
+
+    public function syncedMilkEntries()
+    {
+        return $this->hasMany(MilkEntry::class);
+    }
+
+    public function syncedFeedEntries()
+    {
+        return $this->hasMany(FeedEntry::class);
+    }
+
+    public function syncedHealthRecords()
+    {
+        return $this->hasMany(HealthRecord::class);
+    }
+
+    public function syncedVaccinationRecords()
+    {
+        return $this->hasMany(VaccinationRecord::class);
+    }
+
+    public function syncedExpenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function syncedIncomes()
+    {
+        return $this->hasMany(Income::class);
     }
 }

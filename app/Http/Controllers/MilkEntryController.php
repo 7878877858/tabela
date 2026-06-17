@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\{MilkEntry, Buffalo};
 use Illuminate\Http\Request;
-use App\Models\DailyReport;
-use App\Models\DailyReportMilk;
+use App\Services\MilkStockService;
 
 class MilkEntryController extends Controller
 {
@@ -33,47 +32,9 @@ class MilkEntryController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'entry_date'  => 'required|date',
-            'entries'     => 'required|array',
-            'entries.*.buffalo_id'      => 'required|exists:buffaloes,id',
-            'entries.*.morning_liters'  => 'nullable|numeric|min:0',
-            'entries.*.evening_liters'  => 'nullable|numeric|min:0',
-        ]);
-
-        foreach ($request->entries as $row) {
-            if (($row['morning_liters'] ?? 0) > 0 || ($row['evening_liters'] ?? 0) > 0) {
-                MilkEntry::updateOrCreate(
-                    ['buffalo_id' => $row['buffalo_id'], 'entry_date' => $request->entry_date],
-                    [
-                        'morning_liters' => $row['morning_liters'] ?? 0,
-                        'evening_liters' => $row['evening_liters'] ?? 0,
-                        'notes'          => $row['notes'] ?? null,
-                    ]
-                );
-                // Daily Report Milk sync
-                $dailyReport = DailyReport::whereDate('report_date', $request->entry_date)->first();
-
-                if ($dailyReport) {
-
-                    DailyReportMilk::updateOrCreate(
-                        [
-                            'daily_report_id' => $dailyReport->id,
-                            'buffalo_id'      => $row['buffalo_id'],
-                        ],
-                        [
-                            'morning_milk' => $row['morning_liters'] ?? 0,
-                            'evening_milk' => $row['evening_liters'] ?? 0,
-                            'total_milk'   => ($row['morning_liters'] ?? 0)
-                                + ($row['evening_liters'] ?? 0),
-                        ]
-                    );
-                }
-            }
-        }
-
-        return redirect()->route('milk.index', ['date' => $request->entry_date])
-            ->with('success', 'દૂધ એન્ટ્રી સેવ થઈ!');
+        return redirect()
+            ->route('daily-reports.create')
+            ->with('error', 'દૂધ એન્ટ્રી માત્ર દૈનિક અહેવાલમાંથી કરો. Daily Report is the only data entry source.');
     }
 
     public function history(Request $request)
@@ -95,7 +56,13 @@ class MilkEntryController extends Controller
 
     public function destroy(MilkEntry $milkEntry)
     {
+        if ($milkEntry->daily_report_id) {
+            return back()->with('error', 'આ એન્ટ્રી દૈનિક અહેવાલમાંથી ડિલીટ કરો.');
+        }
+
+        MilkStockService::reverseProduction($milkEntry);
         $milkEntry->delete();
+
         return back()->with('success', 'એન્ટ્રી ડિલીટ થઈ.');
     }
 }

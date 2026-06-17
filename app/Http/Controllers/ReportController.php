@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\{Buffalo, MilkEntry, MilkSale, Expense};
+use App\Models\{Buffalo, MilkEntry, MilkSale, Expense, Income};
 use Illuminate\Http\Request;
 
 class ReportController extends Controller
@@ -31,7 +31,9 @@ class ReportController extends Controller
         ])->sortByDesc('total');
 
         $totalMilk    = $dailyMilk->sum('total');
-        $totalIncome  = MilkSale::whereYear('sale_date',$year)->whereMonth('sale_date',$month)->sum('total_amount');
+        $milkSaleIncome = MilkSale::whereYear('sale_date',$year)->whereMonth('sale_date',$month)->sum('total_amount');
+        $moduleIncome = Income::whereYear('income_date',$year)->whereMonth('income_date',$month)->sum('amount');
+        $totalIncome  = $milkSaleIncome + $moduleIncome;
         $totalExpense = Expense::whereYear('expense_date',$year)->whereMonth('expense_date',$month)->sum('amount');
         $netProfit    = $totalIncome - $totalExpense;
 
@@ -52,10 +54,13 @@ class ReportController extends Controller
         $year = $request->get('year', now()->year);
 
         $monthly = collect(range(1,12))->map(function ($m) use ($year) {
+            $milkSale = MilkSale::whereYear('sale_date',$year)->whereMonth('sale_date',$m)->sum('total_amount');
+            $otherIncome = Income::whereYear('income_date',$year)->whereMonth('income_date',$m)->sum('amount');
+
             return [
                 'month'   => $m,
                 'milk'    => MilkEntry::whereYear('entry_date',$year)->whereMonth('entry_date',$m)->sum('total_liters'),
-                'income'  => MilkSale::whereYear('sale_date',$year)->whereMonth('sale_date',$m)->sum('total_amount'),
+                'income'  => $milkSale + $otherIncome,
                 'expense' => Expense::whereYear('expense_date',$year)->whereMonth('expense_date',$m)->sum('amount'),
             ];
         })->map(fn($r) => array_merge($r, ['profit' => $r['income'] - $r['expense']]));

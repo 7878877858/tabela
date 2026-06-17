@@ -210,16 +210,9 @@
     /* ================= PRINT ================= */
 
     @media print {
-
-        body {
-            background: #fff;
-        }
-
-        .report-wrapper {
-            border: none;
-            padding: 0;
-        }
-
+        body { background: #fff; }
+        .sidebar, .topbar, .no-print { display: none !important; }
+        .report-wrapper { border: none; padding: 0; }
     }
 
     /* ================= MOBILE ================= */
@@ -242,6 +235,11 @@
 </style>
 
 <div class="report-wrapper">
+
+    <div class="no-print" style="margin-bottom:12px; display:flex; gap:8px;">
+        <a href="{{ route('daily-reports.index') }}" class="btn btn-ghost btn-sm">← પાછા</a>
+        <button type="button" class="btn btn-outline btn-sm" onclick="window.print()">🖨️ પ્રિન્ટ</button>
+    </div>
 
     {{-- HEADER --}}
 
@@ -390,7 +388,7 @@
 
         @foreach($dailyReport->milk as $milk)
         <tr>
-            <td>{{ $milk->buffalo->tag_number ?? '-' }}</td>
+            <td>{{ $milk->buffalo?->display_label ?? '-' }}</td>
             <td>{{ $milk->morning_milk }}</td>
             <td>{{ $milk->evening_milk }}</td>
             <td>{{ $milk->total_milk }}</td>
@@ -428,7 +426,7 @@
 
                     @forelse($dailyReport->health as $health)
                     <tr>
-                        <td>{{ $health->buffalo->tag_number ?? '-' }}</td>
+                        <td>{{ $health->buffalo?->display_label ?? '-' }}</td>
                         <td>{{ $health->health_issue }}</td>
                         <td>{{ $health->treatment }}</td>
                     </tr>
@@ -495,7 +493,7 @@
                     @forelse($dailyReport->vaccinations as $vaccination)
 
                     <tr>
-                        <td>{{ $vaccination->buffalo->tag_number ?? '-' }}</td>
+                        <td>{{ $vaccination->buffalo?->display_label ?? '-' }}</td>
 
                         <td>{{ $vaccination->vaccine_name }}</td>
 
@@ -546,7 +544,7 @@
                     <tbody>
                         @forelse($dailyReport->pregnancy as $preg)
                         <tr>
-                            <td>{{ $preg->buffalo->tag_number ?? '-' }}</td>
+                            <td>{{ $preg->buffalo?->display_label ?? '-' }}</td>
                             <td>{{ $preg->buffalo->heat_date }}</td>
                             <td>{{ $preg->buffalo->ai_date }}</td>
                             <td>{{ $preg->buffalo->pregnancy_check_date }}</td>
@@ -568,31 +566,82 @@
                     7. ફીડ સ્ટોક વિગત
                 </div>
 
-                <table class="report-table">
+                @php
+                    $feedRows = $dailyReport->feed->sortBy(fn ($f) => $f->buffalo?->tag_number ?? '');
+                    $showMorningTotal = 0;
+                    $showEveningTotal = 0;
+                    $showGrandTotal = 0;
+                @endphp
+
+                <div style="overflow-x:auto; max-width:100%;">
+                <table class="report-table" style="font-size:11px; white-space:nowrap;">
                     <tr>
-                        <th>પશુ નં.</th>
-                        <th>ફીડ નામ</th>
-                        <th>એકમ</th>
-                        <th>જથ્થો</th>
-                        <th>ટાઈમ</th>
+                        <th rowspan="2">પશુ નં.</th>
+                        <th rowspan="2">નામ</th>
+                        <th colspan="{{ $feeds->count() }}" style="text-align:center; background:#eff6ff;">🌅 સવાર</th>
+                        <th colspan="{{ $feeds->count() }}" style="text-align:center; background:#fff7ed;">🌇 સાંજ</th>
+                        <th rowspan="2">કુલ</th>
+                    </tr>
+                    <tr>
+                        @foreach($feeds as $feed)
+                        <th style="background:#eff6ff;">{{ $feed->name }}</th>
+                        @endforeach
+                        @foreach($feeds as $feed)
+                        <th style="background:#fff7ed;">{{ $feed->name }}</th>
+                        @endforeach
                     </tr>
                     <tbody>
-                        @forelse($dailyReport->feed as $feed)
+                        @forelse($feedRows as $feedRow)
+                        @php
+                            $rowMorning = $feedRow->morningTotal();
+                            $rowEvening = $feedRow->eveningTotal();
+                            $showMorningTotal += $rowMorning;
+                            $showEveningTotal += $rowEvening;
+                            $showGrandTotal += (float) $feedRow->total_feed;
+                        @endphp
                         <tr>
-                            <td>{{ $preg->buffalo->tag_number ?? '-' }}</td>
-                            <td>{{ $feed->feed_name }}</td>
-                            <td>{{ $feed->unit }}</td>
-                            <td>{{ $feed->quantity }}</td>
-                            <td>{{ $feed->feed_time }}</td>
+                            <td>{{ $feedRow->buffalo?->tag_number ?? '—' }}</td>
+                            <td>{{ $feedRow->buffalo?->name ?? '—' }}</td>
+                            @foreach($feeds as $feed)
+                            <td>{{ $feedRow->qtyFor('morning', $feed->id) ?: '—' }}</td>
+                            @endforeach
+                            @foreach($feeds as $feed)
+                            <td>{{ $feedRow->qtyFor('evening', $feed->id) ?: '—' }}</td>
+                            @endforeach
+                            <td><strong>{{ number_format($feedRow->total_feed, 2) }}</strong></td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="3" class="text-center">ડેટા નથી</td>
+                            <td colspan="{{ 3 + ($feeds->count() * 2) }}" class="text-center">ડેટા નથી</td>
                         </tr>
                         @endforelse
                     </tbody>
-
+                    @if($feedRows->isNotEmpty())
+                    <tfoot>
+                        <tr style="font-weight:700; background:#f1f5f9;">
+                            <td colspan="2">કુલ સારાંશ</td>
+                            @foreach($feeds as $feed)
+                            <td>{{ number_format($feedRows->sum(fn ($r) => $r->qtyFor('morning', $feed->id)), 2) }}</td>
+                            @endforeach
+                            @foreach($feeds as $feed)
+                            <td>{{ number_format($feedRows->sum(fn ($r) => $r->qtyFor('evening', $feed->id)), 2) }}</td>
+                            @endforeach
+                            <td>{{ number_format($showGrandTotal, 2) }}</td>
+                        </tr>
+                    </tfoot>
+                    @endif
                 </table>
+                </div>
+
+                @if($feedRows->isNotEmpty())
+                <p style="margin-top:8px; font-size:12px;">
+                    🌅 <strong>સવાર કુલ:</strong> {{ number_format($showMorningTotal, 2) }}
+                    &nbsp;|&nbsp;
+                    🌇 <strong>સાંજ કુલ:</strong> {{ number_format($showEveningTotal, 2) }}
+                    &nbsp;|&nbsp;
+                    🌾 <strong>કુલ ચારો:</strong> {{ number_format($showGrandTotal, 2) }}
+                </p>
+                @endif
 
             </td>
 

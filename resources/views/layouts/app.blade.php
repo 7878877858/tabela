@@ -8,10 +8,14 @@
     <title>{{ \App\Models\Setting::get('farm_name', __('settings.default_farm_name')) }}</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('assets/css/design-system.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/mobile.css') }}">
 
     @php
     $primary = \App\Models\Setting::get('primary_color', '#16a34a');
@@ -62,86 +66,8 @@
             /* Chrome, Safari */
         }
 
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 240px;
-            height: 100vh;
-            background: var(--primary);
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            z-index: 100;
-            transition: transform .3s;
-        }
-
-        .sidebar-header {
-            padding: 20px 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, .2);
-        }
-
-        .sidebar-header h1 {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .sidebar-header p {
-            font-size: 12px;
-            opacity: .7;
-            margin-top: 2px;
-        }
-
-        .sidebar nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px 0;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 11px 20px;
-            color: rgba(255, 255, 255, .85);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background .2s;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
-            background: rgba(255, 255, 255, .15);
-            color: #fff;
-            border-left-color: #fff;
-        }
-
-        .nav-item svg {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-        }
-
-        .nav-section {
-            padding: 8px 20px 4px;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: .8px;
-            opacity: .5;
-            margin-top: 8px;
-        }
-
-        .sidebar-footer {
-            padding: 16px;
-            border-top: 1px solid rgba(255, 255, 255, .2);
-        }
-
         /* Main */
         .main {
-            margin-left: 240px;
             min-height: 100vh;
         }
 
@@ -343,6 +269,11 @@
             cursor: pointer;
         }
 
+        input[type="date"].form-control,
+        input[type="date"] {
+            cursor: pointer;
+        }
+
         /* Badge */
         .badge {
             display: inline-block;
@@ -420,18 +351,6 @@
         }
 
         @media(max-width:768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .main {
-                margin-left: 0;
-            }
-
             .grid-4,
             .grid-3 {
                 grid-template-columns: repeat(2, 1fr);
@@ -473,110 +392,16 @@
     @stack('styles')
 </head>
 
-<body style="--primary: {{ $primary }};--primary-dark: {{ $primaryDark }};--primary-light: {{ $primary }}22;">
+<body style="--primary: {{ $primary }};--primary-dark: {{ $primaryDark }};--primary-light: {{ $primary }}22;--ds-primary: {{ $primary }};">
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h1>🐃 {{ $farmName }}</h1>
-            <p>{{ __('common.management') }}</p>
-        </div>
-        <nav class="hide-scrollbar">
-            <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                📊{{ __('common.dashboard') }}
-            </a>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
-            <div class="nav-section">{{ __('common.buffalo') }}</div>
-            <a href="{{ route('buffalo.index') }}"
-                class="nav-item {{ request()->routeIs('buffalo.*') ? 'active' : '' }}">
-                🐃{{ __('common.all_buffaloes') }}
-            </a>
-            <a href="{{ route('buffalo.create') }}"
-                class="nav-item {{ request()->routeIs('buffalo.create') ? 'active' : '' }}">
-                🐄{{ __('common.add_buffalo') }}
-            </a>
-            <div class="nav-section">New Feeds</div>
-            <a href="{{ route('feeds.index') }}"
-                class="nav-item {{ request()->routeIs('feeds.*') ? 'active' : '' }}">
-                📝New Feeds
-            </a>
-            <div class="nav-section">{{ __('common.milk') }}</div>
-            <a href="{{ route('milk.index') }}" class="nav-item {{ request()->routeIs('milk.index') ? 'active' : '' }}">
-                🥛{{ __('common.milk_entry') }}
-            </a>
-            <a href="{{ route('milk.history') }}"
-                class="nav-item {{ request()->routeIs('milk.history') ? 'active' : '' }}">
-                🕒{{ __('common.milk_history') }}
-            </a>
-            <a href="{{ route('sale.index') }}" class="nav-item {{ request()->routeIs('sale.*') ? 'active' : '' }}">
-                🥛{{ __('common.milk_sales') }}
-            </a>
-
-            <div class="nav-section">{{ __('common.expense') }}</div>
-            <a href="{{ route('kharch.index') }}" class="nav-item {{ request()->routeIs('kharch.*') ? 'active' : '' }}">
-                📉{{ __('common.expense') }}
-            </a>
-
-            <div class="nav-section">{{ __('common.reports') }}</div>
-            <a href="{{ route('reports.monthly') }}"
-                class="nav-item {{ request()->routeIs('reports.monthly') ? 'active' : '' }}">
-                📊{{ __('common.monthly_report') }}
-            </a>
-            <a href="{{ route('reports.yearly') }}"
-                class="nav-item {{ request()->routeIs('reports.yearly') ? 'active' : '' }}">
-                📊{{ __('common.yearly_report') }}
-            </a>
-
-            <div class="nav-section">{{ __('common.staff') }}</div>
-            <a href="{{ route('employees.index') }}"
-                class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }}">
-                👥{{ __('common.employees') }}
-            </a>
-
-            <div class="nav-section">{{ __('common.assets') }}</div>
-
-            <a href="{{ route('assets.index') }}" class="nav-item {{ request()->routeIs('assets.*') ? 'active' : '' }}">
-                🚜 {{ __('common.assets') }}
-            </a>
-
-            <div class="nav-section">{{ __('common.tasks') }}</div>
-
-            <a href="{{ route('tasks.index') }}" class="nav-item {{ request()->routeIs('tasks.*') ? 'active' : '' }}">
-                📋 {{ __('common.tasks') }}
-            </a>
-            <div class="nav-section">{{ __('common.meetings') }}</div>
-            <a href="{{ route('meetings.index') }}"
-                class="nav-item {{ request()->routeIs('meetings.*') ? 'active' : '' }}">
-                📅{{ __('common.meetings') }}
-            </a>
-
-            <div class="nav-section">Daily Reports</div>
-            <a href="{{ route('daily-reports.index') }}"
-                class="nav-item {{ request()->routeIs('daily-reports.*') ? 'active' : '' }}">
-                📝Daily Reports
-            </a>
-
-            <div class="nav-section">{{ __('common.system') }}</div>
-            <a href="{{ route('settings.index') }}"
-                class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
-                🛠️{{ __('common.settings') }}
-            </a>
-
-        </nav>
-        <div class="sidebar-footer">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="nav-item"
-                    style="width:100%; background:none; border:none; cursor:pointer;">
-                    🚪{{ __('common.logout') }}
-                </button>
-            </form>
-        </div>
-    </aside>
+    @include('layouts.partials.sidebar')
 
     <div class="main">
         <header class="topbar">
             <div style="display:flex; align-items:center; gap:12px;">
-                <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                <button class="hamburger" type="button" onclick="toggleSidebar()" aria-label="Menu">
                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M4 6h16M4 12h16M4 18h16" stroke-width="2" stroke-linecap="round" />
                     </svg>
@@ -604,6 +429,88 @@
             @yield('content')
         </main>
     </div>
+
+    <script src="{{ asset('assets/js/sidebar.js') }}"></script>
+
+    {{-- Global date picker: click/focus/tap anywhere on field opens calendar --}}
+    <script>
+    (function () {
+        'use strict';
+
+        var SELECTOR = 'input[type="date"]';
+
+        function getDateInput(el) {
+            if (!el || !el.closest) return null;
+            var input = el.matches && el.matches(SELECTOR) ? el : el.closest(SELECTOR);
+            if (!input || input.disabled || input.readOnly) return null;
+            return input;
+        }
+
+        function supportsShowPicker(input) {
+            return typeof input.showPicker === 'function';
+        }
+
+        function openDatePicker(input) {
+            if (supportsShowPicker(input)) {
+                try {
+                    input.showPicker();
+                    return;
+                } catch (err) {
+                    // InvalidStateError / not a user gesture — fall back to focus
+                }
+            }
+            if (document.activeElement !== input) {
+                input.focus();
+            }
+        }
+
+        var openedFromPointer = false;
+
+        function onPointerActivate(e) {
+            var input = getDateInput(e.target);
+            if (!input) return;
+
+            openedFromPointer = true;
+            window.setTimeout(function () { openedFromPointer = false; }, 0);
+
+            if (supportsShowPicker(input)) {
+                e.preventDefault();
+                input.focus({ preventScroll: true });
+                openDatePicker(input);
+            }
+        }
+
+        if (window.PointerEvent) {
+            document.addEventListener('pointerdown', onPointerActivate, true);
+        } else {
+            document.addEventListener('mousedown', onPointerActivate, true);
+        }
+
+        document.addEventListener('touchstart', function (e) {
+            var input = getDateInput(e.target);
+            if (!input) return;
+            if (!supportsShowPicker(input)) return;
+            openedFromPointer = true;
+            window.setTimeout(function () { openedFromPointer = false; }, 0);
+            e.preventDefault();
+            input.focus({ preventScroll: true });
+            openDatePicker(input);
+        }, { capture: true, passive: false });
+
+        document.addEventListener('focusin', function (e) {
+            var input = getDateInput(e.target);
+            if (!input || openedFromPointer) return;
+            openDatePicker(input);
+        });
+
+        document.addEventListener('click', function (e) {
+            var input = getDateInput(e.target);
+            if (!input) return;
+            if (supportsShowPicker(input)) return;
+            openDatePicker(input);
+        }, true);
+    })();
+    </script>
 
     @stack('scripts')
 </body>

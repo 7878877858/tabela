@@ -2,69 +2,49 @@
 @section('title', __('reports.monthly_report'))
 
 @section('content')
-<div class="page-header">
-    <h2>📊 {{ __('reports.monthly_report') }}</h2>
-    <form method="GET" style="display:flex; gap:8px;">
-        <select name="month" class="form-control" style="width:130px;" onchange="this.form.submit()">
-            @foreach(range(1,12) as $m)
-            <option value="{{ $m }}" {{ $m==$month ? 'selected' : '' }}>
-                {{ \Carbon\Carbon::create()->month($m)->format('F') }}
-            </option>
-            @endforeach
-        </select>
-        <select name="year" class="form-control" style="width:100px;" onchange="this.form.submit()">
-            @foreach(range(now()->year, 2020) as $y)
-            <option value="{{ $y }}" {{ $y==$year ? 'selected' : '' }}>{{ $y }}</option>
-            @endforeach
-        </select>
-    </form>
+
+<x-section-header :title="__('reports.monthly_report')" icon="📊">
+    <x-slot:actions>
+        <form method="GET" class="d-flex gap-2 flex-wrap">
+            <select name="month" class="form-control" style="width:130px;" onchange="this.form.submit()">
+                @foreach(range(1,12) as $m)
+                <option value="{{ $m }}" {{ $m==$month ? 'selected' : '' }}>
+                    {{ \Carbon\Carbon::create()->month($m)->format('F') }}
+                </option>
+                @endforeach
+            </select>
+            <select name="year" class="form-control" style="width:100px;" onchange="this.form.submit()">
+                @foreach(range(now()->year, 2020) as $y)
+                <option value="{{ $y }}" {{ $y==$year ? 'selected' : '' }}>{{ $y }}</option>
+                @endforeach
+            </select>
+        </form>
+    </x-slot:actions>
+</x-section-header>
+
+<div class="ds-stats-grid ds-stats-grid-4">
+    <x-stat-card variant="plain" icon="🥛" :label="__('reports.total_milk')" :value="number_format($totalMilk,1) . ' L'" />
+    <x-stat-card variant="plain" icon="💰" :label="__('reports.total_income')" :value="'₹' . number_format($totalIncome,0)" />
+    <x-stat-card variant="plain" icon="💸" :label="__('reports.total_expense')" :value="'₹' . number_format($totalExpense,0)" valueClass="text-danger" />
+    <x-stat-card variant="plain" icon="📈" :label="__('reports.profit')" :value="'₹' . number_format(abs($netProfit),0)" :valueClass="$netProfit >= 0 ? '' : 'text-danger'" />
 </div>
 
-{{-- Summary cards --}}
-<div class="grid-4" style="margin-bottom:20px;">
-    <div class="stat-card">
-        <div class="label">🥛 {{ __('reports.total_milk') }}</div>
-        <div class="value">{{ number_format($totalMilk,1) }} L</div>
-    </div>
-    <div class="stat-card">
-        <div class="label">💰 {{ __('reports.total_income') }}</div>
-        <div class="value">₹{{ number_format($totalIncome,0) }}</div>
-    </div>
-    <div class="stat-card">
-        <div class="label">💸 {{ __('reports.total_expense') }}</div>
-        <div class="value" style="color:#ef4444;">₹{{ number_format($totalExpense,0) }}</div>
-    </div>
-    <div class="stat-card">
-        <div class="label">📈 {{ __('reports.profit') }}</div>
-        <div class="value" style="color:{{ $netProfit >= 0 ? 'var(--primary)' : '#ef4444' }}">
-            ₹{{ number_format(abs($netProfit),0) }}
-        </div>
-    </div>
-</div>
-
-<div class="grid-2" style="margin-bottom:20px;">
-    {{-- Daily milk bar --}}
-    <div class="card">
-        <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">📅 {{ __('reports.daily_milk') }} (L)</h3>
+<div class="grid-2" style="margin-bottom:var(--ds-space-4);">
+    <x-form-card :title="__('reports.daily_milk') . ' (L)'" icon="📅">
         <canvas id="dailyChart" height="200"></canvas>
-    </div>
-
-    {{-- Expense breakdown --}}
-    <div class="card">
-        <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">💸 {{ __('reports.expense_type') }}</h3>
+    </x-form-card>
+    <x-form-card :title="__('reports.expense_type')" icon="💸">
         @if($expenseByCategory->count())
         <canvas id="expPieChart" height="200"></canvas>
         @else
-        <p style="color:#9ca3af; text-align:center; padding:40px 0;">{{ __('reports.no_expense') }}</p>
+        <p class="text-muted" style="text-align:center;padding:40px 0;">{{ __('reports.no_expense') }}</p>
         @endif
-    </div>
+    </x-form-card>
 </div>
 
-{{-- Per-buffalo table --}}
-<div class="card" style="margin-bottom:20px;">
-    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">🐃 {{ __('reports.buffalo_production') }}</h3>
-    <div class="table-wrap">
-        <table>
+<x-form-card :title="__('reports.buffalo_production')" icon="🐃" :flush="true">
+    <x-responsive-table>
+        <table class="ds-table">
             <thead><tr><th>{{ __('reports.tag') }}</th><th>{{ __('reports.name') }}</th><th>{{ __('reports.total') }} (L)</th><th>{{ __('reports.days') }}</th><th>{{ __('reports.average') }}</th></tr></thead>
             <tbody>
                 @forelse($buffaloSummary as $b)
@@ -80,14 +60,12 @@
                 @endforelse
             </tbody>
         </table>
-    </div>
-</div>
+    </x-responsive-table>
+</x-form-card>
 
-{{-- Daily milk table --}}
-<div class="card">
-    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">📋 {{ __('reports.daily_summary') }}</h3>
-    <div class="table-wrap">
-        <table>
+<x-form-card :title="__('reports.daily_summary')" icon="📋" :flush="true">
+    <x-responsive-table>
+        <table class="ds-table">
             <thead><tr><th>{{ __('reports.date') }}</th><th>{{ __('reports.total') }} (L)</th></tr></thead>
             <tbody>
                 @foreach($dailyMilk as $row)
@@ -98,8 +76,8 @@
                 @endforeach
             </tbody>
         </table>
-    </div>
-</div>
+    </x-responsive-table>
+</x-form-card>
 @endsection
 
 @push('scripts')

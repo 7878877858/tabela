@@ -1,8 +1,31 @@
-# Daily Report – Improvement Plan (MD)
+# Farm Management – Master Roadmap (MD)
 
-**Page:** `http://127.0.0.1:8000/daily-reports`
+**App:** Tabela (તબેલો)  
+**Daily Report:** `http://127.0.0.1:8000/daily-reports`
 
-This document lists what to change. **Section 1–2 are required (your main request).** Section 3+ are optional improvements you can do later.
+This is the **single roadmap** to follow for all improvements. Work in order from **Section 6 (Master implementation path)**. Sections 1–2 are daily-report UI priorities; Sections 9–10 cover the full farm system.
+
+### Implementation status (updated 2026-06-17)
+
+| Phase | Status |
+|-------|--------|
+| Phase 1 – Daily Report UI + feed stock | **Done** (create/update/destroy stock, display_label, JS validation) |
+| Phase 2 – DB & buffalo integrity | **Done** (migrations, Buffalo update, quick fixes) |
+| Phase 3 – Feed stock complete | **Mostly done** (stock-in, transactions, kharch link; min_stock column added) |
+| Phase 4 – Milk + money sync | **Partial** (MilkStockService, DR expenses→Kharch, DR income→Income module) |
+| Phase 5 – Dashboard widgets | **Done** (today sales, બાકી દૂધ, low feed, delivery, missing report) |
+| Phase 6 – PDF/print | **Partial** (print button + CSS; PDF export not yet) |
+| Phase 7–8 – Advanced/polish | **Planned** (roles, cost per buffalo, blade partials) |
+
+---
+| Section | Topic |
+|---------|--------|
+| 1–2 | Must do: પશુ dropdown + feed stock validation |
+| 3–5 | Quick fixes & optional daily-report polish |
+| **6** | **Master implementation path (follow this order)** |
+| 7–8 | UX examples & Phase 1 file checklist |
+| 9 | Farm-wide features (critical → medium → nice) |
+| **10** | **Dashboard target + PDF/print for committee** |
 
 ---
 
@@ -230,23 +253,72 @@ Optional rule: one report per `report_date` → validate `unique:report_date` or
 
 ---
 
-## 6) Implementation order (recommended)
+## 6) Master implementation path (follow in this order)
 
-### Phase 1 – Your priority (do first)
-1. Buffalo dropdown → `B0001-Radha` in all sections.
-2. Feed dropdown → show stock in label + `data-stock` attribute.
-3. Fix migration + `feed_id` in controller/views.
-4. Server validation + deduct `feeds.volume` on save.
-5. JS hint: remaining stock while typing qty.
+Use this as the **official build sequence** after the baseline code pushed to Git.
 
-### Phase 2 – Stability
-6. Fix Employee import, duplicate route, show.blade.php bug.
-7. Edit/delete report stock restore logic.
+### Phase 1 – Daily Report UI + feed stock (current priority)
+- [x] Buffalo dropdown → `display_label` in all sections (milk, feed, health, vaccination, pregnancy)
+- [x] Feed dropdown → show stock in label + `data-stock` attribute
+- [x] Fix migration + `feed_id` in controller/views
+- [x] Server validation: cannot give more than available stock
+- [x] On save: minus from `feeds.volume` via `FeedStockService`
+- [x] JS validation banner on feed stock
+- [x] Edit/delete report: restore old stock + re-validate/deduct new qty
 
-### Phase 3 – Optional polish
-8. Optional sections + collapse defaults.
-9. Index page improvements.
-10. Partials, translations, transaction history.
+### Phase 2 – Database & buffalo data integrity
+- [x] DB migrations: `buffaloes` breeding/birth columns
+- [x] DB migrations: `daily_reports` extra columns
+- [x] DB migrations: `daily_report_feed` → `feed_id`, `buffalo_id`, `feed_time`
+- [x] Fix `BuffaloController@update()` to save all breeding/birth fields
+- [x] Fix `Employee` import, duplicate route, `show.blade.php` feed buffalo bug
+
+### Phase 3 – Feed stock complete (purchase + consume)
+- [x] Feed **purchase / stock in** screen
+- [x] Link feed purchase to **Kharch** (`category = feed`) when amount entered
+- [x] `feed_stock_transactions` table (audit trail)
+- [x] `min_stock` on feeds column (dashboard low-stock widget)
+
+### Phase 4 – Single milk path + money sync
+- [ ] Decide **one** milk entry path (banner on `/milk` → use Daily Report)
+- [x] Link daily report **expenses** → main `expenses` table
+- [x] Link daily report **income** → `incomes` module
+- [x] Dashboard profit uses Kharch + MilkSale + Income
+
+### Phase 5 – Dashboard (farm owner view)
+- [x] **Today milk**
+- [x] **Today sales**
+- [x] **Remaining milk** — produced − sold
+- [x] **Low feed stock**
+- [x] **Delivery this week**
+- [x] **Today's daily report missing?**
+- [x] **Pending salary**
+- [x] **Heat reminders** count + `heatAnimals` on daily report
+- [x] Active / lactating / pregnant counts
+
+### Phase 6 – PDF / print for committee
+- [x] **Print** button on daily report show page
+- [ ] **Export PDF** (DomPDF not installed yet)
+- [ ] **Monthly committee pack** PDF
+- [ ] Committee **read-only** role routes
+
+### Phase 7 – Grow the farm system (medium priority)
+- [ ] **Cost per buffalo** — feed + medicine + allocated labour vs milk income
+- [ ] **Calf → new buffalo** — button on birth record; copy calf tag, pre-fill fields
+- [ ] **Mother–calf link** — `mother_buffalo_id` on `buffaloes`
+- [ ] **Medicine stock** — same as feed (`medicines` table, volume, purchase in, daily report deduct)
+- [ ] **Tasks tied to animals** — e.g. “B0001 – hoof trim” with `buffalo_id` on tasks
+- [ ] **User roles** — Manager (full), Milker (milk+feed only), Committee (read-only)
+- [ ] **Sold/dead history** — `sold_date`, `sale_price`, `buyer`; never hard-delete buffalo
+- [ ] Vaccination schedule with next due date
+- [ ] Audit log for stock/milk changes
+
+### Phase 8 – Polish (when core is stable)
+- [ ] Optional/collapsible daily report sections
+- [ ] Daily report index: real stats, pagination, delete, date filter
+- [ ] Split large blade files into partials
+- [ ] Translations (gu/hi/en) for sidebar labels
+- [ ] Backup export (Excel), weekly DB backup notes
 
 ---
 
@@ -356,20 +428,19 @@ Avoid forcing staff to also open `/milk` separately.
 
 ---
 
-### 9.3 MEDIUM – run farm better over time
+### 9.3 MEDIUM – grow the farm system (Phase 7 detail)
 
-| Feature | Benefit |
-|---------|---------|
-| **Per-buffalo cost vs milk** | Feed + medicine + allocated labour → profit per animal |
-| **Sold / dead animal history** | Sale price, buyer, reason; don’t delete — mark `sold` with date |
-| **Calf → new buffalo** | On birth, button “Create buffalo from calf” (copy tag, set mother link) |
-| **Mother–calf link** | `mother_buffalo_id` for lineage |
-| **Medicine stock** | Same pattern as feed (volume + daily report deduct) |
-| **Low stock alerts** | Dashboard: feeds where `volume < minimum` (add `min_stock` on feeds) |
-| **Tasks linked to animals** | “B0001 – hoof trim” due today (you have Tasks module) |
-| **Monthly committee pack** | Auto PDF: milk total, expenses, daily report summary |
-| **Roles** | Manager (full), Milker (milk+feed only), Committee (read-only reports) |
-| **Audit log** | Who changed milk/feed/stock and when |
+| # | Feature | What to build | Benefit |
+|---|---------|---------------|---------|
+| 1 | **Cost per buffalo** | Sum feed qty × cost, `medicine_cost` from health, optional labour share ÷ lactating days; compare to milk liters × sale rate | Know which animal is profitable |
+| 2 | **Calf → new buffalo** | On buffalo birth section or daily report: button **“નવું પશુ બનાવો”** → pre-fill `tag_number` from `calf_tag_number`, link mother | No double typing; clean records |
+| 3 | **Mother–calf link** | Add `mother_buffalo_id` nullable FK on `buffaloes`; show on buffalo show page | Lineage / breeding history |
+| 4 | **Medicine stock** | Table `medicines` (name, volume, unit, min_stock); purchase in; deduct from daily report health `medicine_cost` qty if tracked by unit | Same control as feed |
+| 5 | **Low feed alert** | `min_stock` on `feeds`; dashboard widget + red badge on feeds index | Never run out unexpectedly |
+| 6 | **Tasks tied to animals** | Add `buffalo_id` to `tasks`; title auto: `{tag}-{name} – {task}`; filter “today’s animal tasks” on dashboard | Field work tracking |
+| 7 | **User roles** | `role` on users or Spatie permission: `manager`, `milker`, `committee`; middleware on routes | Security + simpler UI per role |
+| 8 | **Sold/dead history** | On status `sold`/`dead`: capture `sold_date`, `sale_price`, `buyer_name`, `reason`; hide from active lists, keep in reports | Audit + no data loss |
+| 9 | **Audit log** | `activity_log` or simple table: user, action, model, old/new values | Trust for committee |
 
 ---
 
@@ -387,18 +458,20 @@ Avoid forcing staff to also open `/milk` separately.
 
 ### 9.5 Dashboard – what a farm owner should see (target)
 
-Add cards/widgets not present today:
+**Phase 5** — add cards/widgets not present today:
 
-| Widget | Source |
-|--------|--------|
-| આજનું દૂધ | `milk_entries` today |
-| આજનું વેચાણ | `milk_sales` today |
-| બાકી દૂધ | produced − sold |
-| Low feed stock | `feeds` where volume low |
-| Delivery this week | `buffaloes.expected_delivery_date` |
-| Pending salary | already exists ✓ |
-| Last daily report | link if today missing |
-| Active / lactating / pregnant count | buffalo counts ✓ (partial) |
+| Priority | Widget (Gujarati) | Calculation / source | Status |
+|----------|-------------------|----------------------|--------|
+| High | આજનું દૂધ | `SUM(milk_entries.total_liters)` where `entry_date = today` | Partial (month only today) |
+| High | આજનું વેચાણ | `SUM(milk_sales.total_amount)` + liters where `sale_date = today` | Missing |
+| High | બાકી દૂધ | today produced − today sold − wastage | **Missing** |
+| High | Low feed stock | `feeds` where `volume < min_stock` | **Missing** |
+| High | Delivery this week | `expected_delivery_date` between today and +7 days | **Missing** |
+| High | આજનો અહેવાલ બાકી? | No `daily_reports` row for today → link to create | **Missing** |
+| Medium | Pending salary | `Employee::pendingMonths()` | ✓ Exists |
+| Medium | Heat / AI reminders | Buffalo heat cycle + AI dates | **Missing** |
+| Low | Active / lactating / pregnant | Buffalo counts by status | ✓ Partial |
+| Low | Top milk buffaloes this month | Already on dashboard | ✓ Exists |
 
 ---
 
@@ -412,18 +485,20 @@ Add cards/widgets not present today:
 
 ---
 
-### 9.7 Suggested priority for whole farm (after Phase 1 daily report)
+### 9.7 Quick reference – order after daily report Phase 1
 
-| Order | Task |
-|-------|------|
-| 1 | DB migrations: buffalo breeding fields + daily_reports extra columns |
-| 2 | Fix buffalo create/update to save all breeding fields |
-| 3 | Feed stock: purchase in + consume in daily report (your MD Phase 1) |
-| 4 | Single milk entry path (daily report OR milk page) |
-| 5 | Dashboard: milk balance + delivery reminders + low feed |
-| 6 | Link daily report expenses to main `expenses` table (or merge) |
-| 7 | PDF print daily report for committee |
-| 8 | Roles + backup |
+> Full step-by-step list is in **Section 6**. Summary:
+
+| Step | Phase | Task |
+|------|-------|------|
+| 1 | 2 | DB migrations (buffalo + daily_reports + daily_report_feed) |
+| 2 | 2 | Fix buffalo save/update for breeding fields |
+| 3 | 1–3 | Feed stock: consume with validation + purchase in |
+| 4 | 4 | Single milk entry path |
+| 5 | 5 | Dashboard: milk balance, low feed, delivery, missing report link |
+| 6 | 4 | Link daily report money → Kharch / milk_sales |
+| 7 | 6 | PDF + print for committee |
+| 8 | 7 | Roles, cost per buffalo, calf link, medicine stock, tasks |
 
 ---
 
@@ -440,4 +515,61 @@ Add cards/widgets not present today:
 
 ---
 
-*Last updated: પશુ dropdown + feed stock validation (Phase 1) + farm-wide improvement list (Section 9).*
+## 10) Dashboard & committee PDF/print (detailed spec)
+
+### 10.1 Dashboard layout (after Phase 5)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  આજનું દૂધ    │  આજનું વેચાણ   │  બાકી દૂધ    │  Pending salary │
+├─────────────────────────────────────────────────────────────┤
+│  Low feed (2)  │  Delivery this week (1)  │  Report missing? │
+├─────────────────────────────────────────────────────────────┤
+│  Last 7 days milk chart (exists)  │  Top buffaloes (exists) │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**“આજનો અહેવાલ બાકી?” logic:**
+```php
+$todayReport = DailyReport::whereDate('report_date', today())->first();
+if (!$todayReport) {
+    // show alert + link route('daily-reports.create')
+}
+```
+
+**Remaining milk logic:**
+```php
+$todayProduced = MilkEntry::whereDate('entry_date', today())->sum('total_liters');
+$todaySold     = MilkSale::whereDate('sale_date', today())->sum('liters_sold');
+$remaining     = $todayProduced - $todaySold; // minus wastage when field added
+```
+
+### 10.2 PDF / print for committee (Phase 6)
+
+| Item | Implementation |
+|------|----------------|
+| Print button | On `Daily_Report/show.blade.php` — `window.print()` + print CSS hide sidebar |
+| PDF export | Route `daily-reports/{id}/pdf` — DomPDF render same show view |
+| Committee access | Role `committee`: only `index`, `show`, `pdf` routes |
+| Monthly pack | Route `reports/committee-pack?month=&year=` — aggregate milk, kharch, daily reports |
+| WhatsApp | Optional: generate PDF, store in `storage`, share download link |
+
+**Print checklist:**
+- [ ] Hide app sidebar and topbar when printing
+- [ ] Page breaks between major sections
+- [ ] Gujarati font embedded in PDF (Hind Vadodara or Noto Sans Gujarati)
+- [ ] Header: farm name from `settings`, date, report number, reporter
+- [ ] Footer: signature lines for manager + committee
+
+### 10.3 Files for Phase 5–6
+
+- [ ] `app/Http/Controllers/DashboardController.php` — new widgets
+- [ ] `resources/views/dashboard/index.blade.php` — new cards
+- [ ] `resources/views/Daily_Report/show.blade.php` — print + PDF button
+- [ ] `app/Http/Controllers/DailyReportController.php` — `pdf()` method
+- [ ] `routes/web.php` — pdf route + role middleware
+- [ ] `database/migrations/` — `users.role` or permissions table
+
+---
+
+*Last updated: Master roadmap Sections 6, 9, 10 — medium farm features, dashboard targets, PDF/print for committee.*

@@ -6,7 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 class MilkEntry extends Model
 {
     protected $fillable = [
-        'buffalo_id','entry_date','morning_liters','evening_liters','notes'
+        'buffalo_id',
+        'daily_report_id',
+        'entry_date',
+        'morning_liters',
+        'evening_liters',
+        'notes',
     ];
     protected $casts = ['entry_date' => 'date'];
 

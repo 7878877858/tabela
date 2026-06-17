@@ -1,0 +1,150 @@
+/* Milk Sales & Transactions ledger */
+.milk-ledger-page {
+    font-family: 'Inter', 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+}
+
+.milk-ledger-page .ml-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.milk-ledger-page .ml-summary-cards--4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.milk-ledger-page .ml-metric-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.milk-ledger-page .ml-metric-card__label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.milk-ledger-page .ml-metric-card__value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.milk-ledger-page .ml-ledger-panel {
+    padding: 14px;
+}
+
+.milk-ledger-page .ml-filter-bar {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.milk-ledger-page .ml-filter-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.milk-ledger-page .ml-filter-row:last-of-type {
+    margin-bottom: 0;
+}
+
+.milk-ledger-page .ml-filter-bar .form-group {
+    margin-bottom: 0;
+}
+
+.milk-ledger-page .ml-filter-bar .form-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 3px;
+}
+
+.milk-ledger-page .ml-filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.milk-ledger-page .ml-export-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.milk-ledger-page .ml-search-group {
+    grid-column: span 2;
+}
+
+.milk-ledger-page .ml-table-wrap {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow-x: auto;
+}
+
+.milk-ledger-page .ml-ledger-table {
+    width: 100%;
+    min-width: 720px;
+    margin-bottom: 0;
+}
+
+.milk-ledger-page .ml-ledger-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f8fafc;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.milk-ledger-page .ml-ledger-table tbody td {
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+@media (max-width: 991.98px) {
+    .milk-ledger-page .ml-summary-cards,
+    .milk-ledger-page .ml-summary-cards--4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .milk-ledger-page .ml-filter-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .milk-ledger-page .ml-search-group {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .milk-ledger-page .ml-summary-cards,
+    .milk-ledger-page .ml-summary-cards--4 {
+        grid-template-columns: 1fr;
+    }
+
+    .milk-ledger-page .ml-filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .milk-ledger-page .ml-search-group {
+        grid-column: span 1;
+    }
+}
