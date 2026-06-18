@@ -73,6 +73,38 @@ class DailyReportController extends Controller
         return Buffalo::activeCountsByAnimalType(true);
     }
 
+    /**
+     * Active feed types for the daily report grid.
+     * Seeds common defaults when the live DB has no feed master data.
+     */
+    protected function feedsForDailyReport()
+    {
+        $feeds = Feed::where('status', 1)->withInventoryStats()->orderBy('name')->get();
+
+        if ($feeds->isNotEmpty()) {
+            return $feeds;
+        }
+
+        foreach (
+            [
+                ['name' => 'Napier', 'unit' => 'kg'],
+                ['name' => 'Dan', 'unit' => 'kg'],
+            ] as $row
+        ) {
+            Feed::firstOrCreate(
+                ['name' => $row['name']],
+                [
+                    'volume'    => 0,
+                    'min_stock' => 0,
+                    'unit'      => $row['unit'],
+                    'status'    => 1,
+                ]
+            );
+        }
+
+        return Feed::where('status', 1)->withInventoryStats()->orderBy('name')->get();
+    }
+
     protected function saveMilkGrid(DailyReport $report, Request $request): float
     {
         $grid = $request->input('milk_grid', []);
@@ -257,7 +289,7 @@ class DailyReportController extends Controller
     {
         $employees = Employee::all();
         $buffaloes = Buffalo::all();
-        $feeds = Feed::where('status', 1)->withInventoryStats()->get();
+        $feeds = $this->feedsForDailyReport();
         $totalAnimals = Buffalo::totalHeadCount(true);
         $animalTypeCounts = $this->animalTypeCountsForReport();
 
@@ -530,7 +562,7 @@ class DailyReportController extends Controller
         )->sum('total_liters');
 
         $heatAnimals = $this->heatAnimalsCount();
-        $feeds = Feed::where('status', 1)->withInventoryStats()->get();
+        $feeds = $this->feedsForDailyReport();
 
         return view(
             'Daily_Report.show',
@@ -565,7 +597,7 @@ class DailyReportController extends Controller
         ])->findOrFail($id);
         $employees = Employee::all();
         $buffaloes = Buffalo::all();
-        $feeds = Feed::where('status', 1)->withInventoryStats()->get();
+        $feeds = $this->feedsForDailyReport();
 
         $totalAnimals = Buffalo::totalHeadCount(true);
         $animalTypeCounts = $this->animalTypeCountsForReport();

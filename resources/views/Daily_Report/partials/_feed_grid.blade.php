@@ -23,6 +23,12 @@
     $feedSubColPct = number_format(28 / $feedColCount, 4, '.', '');
 @endphp
 
+@if($feeds->isEmpty())
+<div class="alert alert-warning mb-2" style="font-size:13px;">
+    કોઈ ચારો પ્રકાર મળ્યો નથી. સેટિંગ્સ → ચારો માસ્ટરમાં ઉમેરો અથવા પૃષ્ઠ રિફ્રેશ કરો.
+</div>
+@endif
+
 <div id="feedGridHiddenStore" class="dr-grid-hidden-store" aria-hidden="true">
     @foreach($feedAnimals as $buffalo)
     @php
@@ -54,17 +60,23 @@
             @foreach($feeds as $feed)
             <col style="width:{{ $feedSubColPct }}%">
             @endforeach
+            @if($feeds->isEmpty())
+            <col style="width:{{ $feedSubColPct }}%">
+            @endif
             @foreach($feeds as $feed)
             <col style="width:{{ $feedSubColPct }}%">
             @endforeach
+            @if($feeds->isEmpty())
+            <col style="width:{{ $feedSubColPct }}%">
+            @endif
             <col style="width:14%">
         </colgroup>
         <thead>
             <tr>
                 <th rowspan="2">ટેગ નં.</th>
                 <th rowspan="2">પશુ નામ</th>
-                <th colspan="{{ $feeds->count() }}" class="feed-period-group">🌅 સવાર (Morning)</th>
-                <th colspan="{{ $feeds->count() }}" class="feed-period-group feed-period-evening">🌇 સાંજ (Evening)</th>
+                <th colspan="{{ $feedColCount }}" class="feed-period-group">🌅 સવાર (Morning)</th>
+                <th colspan="{{ $feedColCount }}" class="feed-period-group feed-period-evening">🌇 સાંજ (Evening)</th>
                 <th rowspan="2">કુલ ચારો</th>
             </tr>
             <tr>
@@ -73,11 +85,17 @@
                     {{ $feed->name }}
                 </th>
                 @endforeach
+                @if($feeds->isEmpty())
+                <th class="feed-col-morning">ચારો</th>
+                @endif
                 @foreach($feeds as $feed)
                 <th class="feed-col-evening feed-period-evening" data-feed-id="{{ $feed->id }}" data-stock="{{ $feed->available_quantity ?? 0 }}">
                     {{ $feed->name }}
                 </th>
                 @endforeach
+                @if($feeds->isEmpty())
+                <th class="feed-col-evening feed-period-evening">ચારો</th>
+                @endif
             </tr>
         </thead>
         <tbody id="feedGridBody"></tbody>
@@ -87,9 +105,15 @@
                 @foreach($feeds as $feed)
                 <td><span class="summary-morning" data-feed-id="{{ $feed->id }}">0</span></td>
                 @endforeach
+                @if($feeds->isEmpty())
+                <td><span class="summary-morning">0</span></td>
+                @endif
                 @foreach($feeds as $feed)
                 <td><span class="summary-evening" data-feed-id="{{ $feed->id }}">0</span></td>
                 @endforeach
+                @if($feeds->isEmpty())
+                <td><span class="summary-evening">0</span></td>
+                @endif
                 <td><span id="summaryGrandTotal">0</span></td>
             </tr>
         </tfoot>

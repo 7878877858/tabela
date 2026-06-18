@@ -337,7 +337,10 @@
     function initFeedGrid() {
         const jsonEl = document.getElementById('feedAnimalsJson');
         const feedsEl = document.getElementById('feedTypesJson');
-        if (!jsonEl || !feedsEl) return null;
+        if (!jsonEl || !feedsEl) {
+            console.warn('[DailyReportGrids] Feed grid JSON elements missing — inputs will not render.');
+            return null;
+        }
 
         let animals = [];
         let feeds = [];
@@ -345,7 +348,12 @@
             animals = JSON.parse(jsonEl.textContent || '[]');
             feeds = JSON.parse(feedsEl.textContent || '[]');
         } catch (e) {
+            console.error('[DailyReportGrids] Failed to parse feed grid JSON', e);
             return null;
+        }
+
+        if (!feeds.length) {
+            console.warn('[DailyReportGrids] No feed types configured — add feeds in master or refresh page.');
         }
 
         const firstTab = TABS.find((t) => animals.some((a) => normalizeType(a.animal_type) === t.key))?.key || 'buffalo';
@@ -368,14 +376,14 @@
                 tr.dataset.buffaloId = animal.id;
                 let html = `<td><strong>${animal.tag}</strong></td><td>${animal.name || '—'}</td>`;
                 feeds.forEach((feed) => {
-                    html += `<td class="dr-grid-input-cell"><input type="number" step="0.01" min="0" class="form-control feed-qty-input feed-qty"
+                    html += `<td class="dr-grid-input-cell"><input type="number" step="0.01" min="0" class="form-control form-control-sm feed-qty-input feed-qty"
                         data-period="morning" data-feed-id="${feed.id}" data-buffalo-id="${animal.id}"
-                        data-sync-field="feed-${animal.id}-morning-${feed.id}" placeholder="0"></td>`;
+                        data-sync-field="feed-${animal.id}-morning-${feed.id}" placeholder="0.00" inputmode="decimal"></td>`;
                 });
                 feeds.forEach((feed) => {
-                    html += `<td class="dr-grid-input-cell"><input type="number" step="0.01" min="0" class="form-control feed-qty-input feed-qty"
+                    html += `<td class="dr-grid-input-cell"><input type="number" step="0.01" min="0" class="form-control form-control-sm feed-qty-input feed-qty"
                         data-period="evening" data-feed-id="${feed.id}" data-buffalo-id="${animal.id}"
-                        data-sync-field="feed-${animal.id}-evening-${feed.id}" placeholder="0"></td>`;
+                        data-sync-field="feed-${animal.id}-evening-${feed.id}" placeholder="0.00" inputmode="decimal"></td>`;
                 });
                 html += `<td class="feed-row-total"><span class="row-total-display">0.00</span></td>`;
                 tr.innerHTML = html;

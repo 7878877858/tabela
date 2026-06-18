@@ -494,9 +494,25 @@
     padding: 4px 6px;
     margin-left: auto;
     margin-right: auto;
-    display: block;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     font-size: 13px;
     text-align: center;
+    background: #fff !important;
+    border: 1.5px solid #94a3b8 !important;
+    border-radius: 8px;
+    color: #0f172a !important;
+    -webkit-appearance: auto;
+    appearance: auto;
+    box-shadow: none;
+}
+
+.daily-report-page .milk-grid-table .dr-grid-input-cell .milk-qty-input:focus,
+.daily-report-page .feed-grid-table .dr-grid-input-cell .feed-qty-input:focus {
+    border-color: #3b82f6 !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
 }
 
 .daily-report-page .milk-row-total-wrap,

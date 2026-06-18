@@ -2,7 +2,11 @@
 @section('title', 'દૈનિક સ્ટાફ કાર્ય અહેવાલ')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('assets/css/daily-report.css') }}">
+@php
+    $drCssVer = @filemtime(public_path('assets/css/daily-report.css')) ?: '1';
+    $drJsVer = @filemtime(public_path('assets/js/daily-report-grids.js')) ?: '1';
+@endphp
+<link rel="stylesheet" href="{{ asset('assets/css/daily-report.css') }}?v={{ $drCssVer }}">
 <style>
     /* Page-specific: Daily Report mobile table cards — global styles in design-system.css */
     .icon {
@@ -1319,7 +1323,7 @@
             });
         </script>
 
-        <script src="{{ asset('assets/js/daily-report-grids.js') }}"></script>
+        <script src="{{ asset('assets/js/daily-report-grids.js') }}?v={{ $drJsVer }}"></script>
         <script>
         (function() {
             function collectMilkGridForServer() {

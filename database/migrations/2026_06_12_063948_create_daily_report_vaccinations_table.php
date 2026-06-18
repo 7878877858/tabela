@@ -13,11 +13,11 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('daily_report_id')
-                ->constrained()
+                ->constrained('daily_reports')
                 ->cascadeOnDelete();
 
             $table->foreignId('buffalo_id')
-                ->constrained()
+                ->constrained('buffaloes')
                 ->cascadeOnDelete();
 
             $table->string('vaccine_name');
