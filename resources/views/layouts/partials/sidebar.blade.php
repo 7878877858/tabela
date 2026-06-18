@@ -5,6 +5,10 @@
     $isBuffaloAll = request()->routeIs('buffalo.index', 'buffalo.show', 'buffalo.edit') && !$tabCow;
     $isBuffaloAdd = request()->routeIs('buffalo.create');
     $isCows = request()->routeIs('buffalo.*') && $tabCow;
+    $isFeeds = request()->routeIs('feeds.*');
+    $isFeedsList = request()->routeIs('feeds.index', 'feeds.show', 'feeds.edit');
+    $isFeedsAdd = request()->routeIs('feeds.create');
+    $isFeedsHistory = request()->routeIs('feeds.history');
     $isMilkGroup = request()->routeIs('milk.*', 'sale.*');
     $isMilkEntry = request()->routeIs('milk.index');
     $isMilkHistory = request()->routeIs('milk.history');
@@ -58,6 +62,28 @@
                 <a href="{{ route('buffalo.index', ['tab' => 'cow']) }}"
                    class="erp-sidebar__sublink {{ $isCows ? 'is-active' : '' }}">
                     <span>{{ __('common.cows') }}</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="erp-sidebar__group {{ $isFeeds ? 'is-active' : '' }}" data-group="feeds">
+            <button type="button" class="erp-sidebar__group-toggle" aria-expanded="false">
+                <i class="bi bi-basket2"></i>
+                <span>{{ __('common.feeds') }}</span>
+                <i class="bi bi-chevron-down erp-sidebar__chevron"></i>
+            </button>
+            <div class="erp-sidebar__group-items">
+                <a href="{{ route('feeds.index') }}"
+                   class="erp-sidebar__sublink {{ $isFeedsList ? 'is-active' : '' }}">
+                    <span>{{ __('common.feeds') }}</span>
+                </a>
+                <a href="{{ route('feeds.create') }}"
+                   class="erp-sidebar__sublink {{ $isFeedsAdd ? 'is-active' : '' }}">
+                    <span>{{ __('common.add_feed') }}</span>
+                </a>
+                <a href="{{ route('feeds.history') }}"
+                   class="erp-sidebar__sublink {{ $isFeedsHistory ? 'is-active' : '' }}">
+                    <span>{{ __('common.feed_history') }}</span>
                 </a>
             </div>
         </div>

@@ -28,6 +28,8 @@ return [
     'tasks' => 'कार्य',
     'meetings' => 'बैठकें',
     'feeds' => 'चारा',
+    'add_feed' => 'नया चारा जोड़ें',
+    'feed_history' => 'चारा इतिहास',
     'daily_reports' => 'दैनिक रिपोर्ट',
     'daily_report' => 'दैनिक रिपोर्ट',
 ];

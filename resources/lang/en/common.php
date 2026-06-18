@@ -28,6 +28,8 @@ return [
     'tasks' => 'Tasks',
     'meetings' => 'Meetings',
     'feeds' => 'Feeds',
+    'add_feed' => 'Add Feed',
+    'feed_history' => 'Feed History',
     'daily_reports' => 'Daily Reports',
     'daily_report' => 'Daily Report',
 ];

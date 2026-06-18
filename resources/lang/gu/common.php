@@ -27,6 +27,8 @@ return [
     'tasks' => 'કાર્યો',
     'meetings' => 'મીટિંગો',
     'feeds' => 'ચારો',
+    'add_feed' => 'નવો ચારો ઉમેરો',
+    'feed_history' => 'ચારો ઇતિહાસ',
     'daily_reports' => 'દૈનિક અહેવાલ',
     'daily_report' => 'દૈનિક અહેવાલ',
 ];
