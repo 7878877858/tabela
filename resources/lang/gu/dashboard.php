@@ -1,47 +1,76 @@
 <?php
 
 return [
-
     'title' => 'ડૅશબોર્ડ',
+    'welcome' => 'સ્વાગત છે',
+    'farm_overview' => 'ફાર્મ ઝલક',
+    'today_date' => 'આજની તારીખ',
 
-    'total_buffaloes' => 'કુલ ભેંસો',
-    'lactating' => 'દૂધ આપે છે',
+    'live_farm_status' => 'લાઇવ ફાર્મ સ્થિતિ',
+    'farm_health_overview' => 'ફાર્મ આરોગ્ય ઝલક',
+    'milk_production_chart' => 'દૂધ ઉત્પાદન (૭ દિવસ)',
+    'animal_distribution' => 'પશુ વિતરણ',
+    'todays_alerts' => 'આજની સૂચનાઓ',
+    'top_milk_animals' => 'ટોચના દૂધ ઉત્પાદક',
+    'quick_actions' => 'ઝડપી ક્રિયાઓ',
+    'farm_health_score' => 'ફાર્મ આરોગ્ય સ્કોર',
 
     'today_milk' => 'આજનું દૂધ',
-    'month_milk' => 'આ મહિને દૂધ',
-
+    'milk_stock' => 'દૂધ સ્ટોક',
+    'active_animals' => 'સક્રિય પશુઓ',
+    'lactating' => 'દૂધ આપતા',
+    'today_sales' => 'આજનું વેચાણ',
+    'month_net' => 'આ મહિનો નેટ',
     'profit' => 'નફો',
     'loss' => 'નુકસાન',
-
     'this_month' => 'આ મહિને',
+    'liters' => 'લિટર',
 
-    'month_income' => 'આ મહિને આવક',
-    'month_expense' => 'આ મહિને ખર્ચ',
-
+    'pregnant' => 'ગર્ભવતી',
+    'delivery_week' => 'પ્રસૂતિ (૭ દિવસ)',
+    'in_heat' => 'હીટમાં',
+    'low_feed' => 'ઓછો ચારો',
     'pending_salary' => 'પગાર બાકી',
-
-    'avg_per_day' => 'સરેરાશ / દિવસ',
-
-    'last_7_days_milk' => 'છેલ્લા ૭ દિવસ — દૂધ',
-
-    'expense_by_type' => 'ખર્ચ — પ્રકાર મુજબ',
-
-    'top_milk_producers' => 'સૌથી વધુ દૂધ (આ મહિને)',
+    'asset_service' => 'સર્વિસ બાકી',
 
     'buffalo' => 'ભેંસ',
+    'cow' => 'ગાય',
+    'buffalo_calf' => 'ભેંસ બચ્ચું',
+    'cow_calf' => 'ગાય બચ્ચું',
 
-    'total_liters' => 'કુલ L',
+    'no_milk_data' => 'છેલ્લા ૭ દિવસમાં દૂધ ડેટા નથી',
+    'no_animals' => 'કોઈ સક્રિય પશુ નથી',
+    'no_producers' => 'આ મહિને દૂધ ડેટા નથી',
 
-    'quick_action' => 'ઝડપી ઍક્શન',
+    'score_excellent' => 'ઉત્તમ',
+    'score_good' => 'સારું',
+    'score_fair' => 'સાધારણ',
+    'score_critical' => 'સુધારો જરૂરી',
+    'score_issues' => ':count મુદ્દા',
 
-    'today_milk_entry' => 'આજની દૂધ એન્ટ્રી',
+    'alert_no_milk' => 'આજનો દૂધ અહેવાલ બાકી છે — દૈનિક અહેવાલ દાખલ કરો',
+    'alert_low_feed' => ':name — માત્ર :qty :unit બાકી',
+    'alert_more_low_feed' => 'વધુ :count ચારો પ્રકાર ઓછો સ્ટોક',
+    'alert_delivery_week' => ':count પશુની પ્રસૂતિ આ સપ્તાહે',
+    'alert_vaccination_due' => ':count રસીકરણ બાકી',
+    'alert_pregnancy_check_due' => ':count પ્રેગ્નન્સી તપાસ બાકી',
+    'alert_treatment_followup' => ':count પશુ સારવાર હેઠળ',
+    'alert_heat' => ':count પશુ હીટ સાયકલમાં',
+    'alert_pending_salary' => 'કર્મચારી પગાર બાકી: :amount',
+    'alert_asset_service' => ':count એસેટ સર્વિસ આગામી ૩૦ દિવસ',
+    'alert_all_clear' => 'બધું સામાન્ય — કોઈ તાત્કાલિક સૂચના નથી',
 
-    'add_expense' => 'ખર્ચ ઉમેરો',
-    'add_income' => 'આવક ઉમેરો',
+    'milk_flow_title' => 'દૂધ પ્રવાહ સારાંશ',
 
-    'sale_entry' => 'વેચાણ એન્ટ્રી',
-
-    'view_month' => 'આ મહિનો જુઓ',
+    'action_daily_report' => 'દૈનિક અહેવાલ',
+    'action_milk_sale' => 'દૂધ વેચાણ',
+    'action_expense' => 'ખર્ચ',
+    'action_income' => 'આવક',
+    'action_animals' => 'પશુઓ',
+    'action_monthly' => 'માસિક અહેવાલ',
+    'action_feeds' => 'ચારો',
+    'action_tasks' => 'કાર્યો',
+    'action_reports' => 'અહેવાલ',
 
     'feed' => 'ચારો',
     'medicine' => 'દવા',
@@ -49,6 +78,4 @@ return [
     'equipment' => 'સાધન',
     'veterinary' => 'ડૉક્ટર',
     'other' => 'અન્ય',
-
-    'no_expense_this_month' => 'આ મહિને કોઈ ખર્ચ નથી',
 ];

@@ -2,8 +2,8 @@
 @section('title', __('sale.milk_sales'))
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('assets/css/daily-report.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/css/milk-ledger.css') }}">
+<link rel="stylesheet" href="{{ asset('static/css/daily-report.css') }}">
+<link rel="stylesheet" href="{{ asset('static/css/milk-ledger.css') }}">
 
 <x-section-header :title="__('sale.milk_sales')" icon="💰">
     <x-slot:actions>
@@ -80,6 +80,8 @@
 
     <x-form-card :title="__('sale.milk_sales')" icon="📋" :flush="true">
         <div class="ml-ledger-panel">
+            <x-erp-listing :per-page="25" id="milk-sales" :search="false">
+                <x-slot:filters>
             <div class="ml-filter-bar">
                 <div class="ml-filter-row">
                     <div class="form-group">
@@ -126,13 +128,8 @@
                         <label class="form-label">Amount Max (₹)</label>
                         <input type="number" step="1" id="mlAmountMax" class="form-control form-control-sm" placeholder="Max">
                     </div>
-                    <div class="form-group ml-search-group">
-                        <label class="form-label">Search Buyer</label>
-                        <input type="search" id="mlSearch" class="form-control form-control-sm" placeholder="Buyer name..." autocomplete="off">
-                    </div>
                 </div>
                 <div class="ml-filter-actions">
-                    <span class="text-muted" id="mlFilteredCount">0 records</span>
                     <div class="ml-export-btns">
                         <button type="button" class="btn btn-outline btn-sm" id="mlExportCsv">Export CSV</button>
                         <button type="button" class="btn btn-outline btn-sm" id="mlExportExcel">Export Excel</button>
@@ -140,11 +137,16 @@
                     </div>
                 </div>
             </div>
+                </x-slot:filters>
+                <x-slot:toolbar>
+                    <input type="search" id="mlSearch" class="form-control form-control-sm" placeholder="ખરીદનાર શોધો..." autocomplete="off">
+                </x-slot:toolbar>
 
-            <div class="table-responsive ml-table-wrap">
+            <div class="table-responsive ml-table-wrap mobile-card-table">
                 <table class="ds-table ml-ledger-table">
                     <thead>
                         <tr>
+                            <th class="erp-listing__sr-col">{{ __('common.sr_no') }}</th>
                             <th data-sort="date">Date ↕</th>
                             <th data-sort="liters">Liters ↕</th>
                             <th data-sort="price_per_liter">Rate ↕</th>
@@ -157,7 +159,7 @@
                     <tbody id="milkSalesBody"></tbody>
                 </table>
             </div>
-            <div id="milkSalesPagination" class="dr-grid-pagination"></div>
+            </x-erp-listing>
         </div>
     </x-form-card>
 </div>
@@ -180,6 +182,7 @@ function calcSale() {
 }
 calcSale();
 </script>
-<script src="{{ asset('assets/js/milk-data-grid.js') }}"></script>
+<script src="{{ asset('static/js/erp-listing-grid.js') }}"></script>
+<script src="{{ asset('static/js/milk-data-grid.js') }}"></script>
 @endpush
 @endsection

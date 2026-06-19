@@ -4,9 +4,9 @@ return [
 
     'title' => 'ભેંસ',
 
-    'all_buffaloes' => 'બધી ભેંસો',
-    'new_buffalo' => 'નવી ભેંસ',
-    'add_buffalo' => 'નવી ભેંસ ઉમેરો',
+    'all_buffaloes' => 'બધા પશુઓ',
+    'new_buffalo' => 'નવા પશુઓ',
+    'add_buffalo' => 'નવા પશુઓ ઉમેરો',
     'edit_buffalo' => 'ભેંસ સુધારો',
     'view_buffalo' => 'ભેંસ વિગતો',
 

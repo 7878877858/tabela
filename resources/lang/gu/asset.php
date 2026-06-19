@@ -34,7 +34,7 @@ return [
     'sold' => 'વેચાયેલ',
     'scrap' => 'ભંગાર',
 
-    'image' => 'છબી',
+    'image' => 'Image',
     'no_image' => 'છબી નથી',
 
     'description' => 'વર્ણન',

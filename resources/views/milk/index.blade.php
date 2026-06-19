@@ -31,10 +31,15 @@
 </div>
 
 <x-form-card :title="__('milk.milk_entry')" icon="🥛" :flush="true">
+    <x-erp-listing :per-page="25" id="milk-entry" :search="false" :total-meta="__('common.total_records', ['total' => $buffaloes->count()])">
+        <x-slot:toolbar>
+            <input type="search" id="milkEntrySearch" class="form-control form-control-sm" placeholder="{{ __('common.search_placeholder') }}" autocomplete="off">
+        </x-slot:toolbar>
     <x-responsive-table>
-        <table class="ds-table">
+        <table class="ds-table" id="milkEntryTable">
             <thead>
                 <tr>
+                    <th class="erp-listing__sr-col">{{ __('common.sr_no') }}</th>
                     <th>{{ __('milk.tag_name') }}</th>
                     <th>{{ __('milk.morning_liters') }} (L)</th>
                     <th>{{ __('milk.evening_liters') }} (L)</th>
@@ -46,6 +51,7 @@
                 @forelse($buffaloes as $buffalo)
                 @php $entry = $entries[$buffalo->id] ?? null; @endphp
                 <tr>
+                    <td>0</td>
                     <td data-label="{{ __('milk.tag_name') }}">
                         <strong>{{ $buffalo->tag_number }}</strong>
                         @if($buffalo->name) <span class="text-muted" style="font-size:12px;">{{ $buffalo->name }}</span> @endif
@@ -56,15 +62,25 @@
                     <td data-label="{{ __('milk.notes') }}">{{ $entry?->notes ?? '—' }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="5" class="text-center" style="padding:2rem;color:#94a3b8;">{{ __('milk.no_active_buffalo') }}</td></tr>
+                <tr><td colspan="6" class="text-center" style="padding:2rem;color:#94a3b8;">{{ __('milk.no_active_buffalo') }}</td></tr>
                 @endforelse
             </tbody>
         </table>
     </x-responsive-table>
-    @if($buffaloes->count() > 0)
-    <p class="text-muted mb-0" style="padding:12px 16px;font-size:0.875rem;">
-        {{ __('milk.total_buffaloes') }}: <strong>{{ $buffaloes->count() }}</strong>
-    </p>
-    @endif
+    </x-erp-listing>
 </x-form-card>
 @endsection
+
+@push('scripts')
+<script src="{{ asset('static/js/erp-listing-grid.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    ErpListingGrid.initStaticTable({
+        tableId: 'milkEntryTable',
+        listingId: 'milk-entry',
+        searchInputId: 'milkEntrySearch',
+        labels: { noRecords: @json(__('milk.no_active_buffalo')) },
+    });
+});
+</script>
+@endpush

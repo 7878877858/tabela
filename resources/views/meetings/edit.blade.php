@@ -192,10 +192,17 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function () {
-  $('.select2').select2({
-    placeholder: '{{ __("Meetings.select_participants_placeholder") }}',
-    width: '100%'
-  });
+  if (window.ErpSelect) {
+    ErpSelect.initSelect2All('.select2', {
+      placeholder: '{{ __("Meetings.select_participants_placeholder") }}',
+    });
+  } else {
+    $('.select2').select2({
+      placeholder: '{{ __("Meetings.select_participants_placeholder") }}',
+      width: '100%',
+      dropdownParent: $(document.body),
+    });
+  }
 });
 </script>
 

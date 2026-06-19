@@ -4,9 +4,9 @@ return [
 
     'title' => 'Buffalo',
 
-    'all_buffaloes' => 'All Buffaloes',
-    'new_buffalo' => 'New Buffalo',
-    'add_buffalo' => 'Add New Buffalo',
+    'all_buffaloes' => 'All Animals',
+    'new_buffalo' => 'New Animal',
+    'add_buffalo' => 'Add New Animal',
     'edit_buffalo' => 'Edit Buffalo',
     'view_buffalo' => 'Buffalo Details',
 

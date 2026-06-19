@@ -89,20 +89,25 @@
 
 {{-- Table --}}
 <x-form-card :title="__('kharch.expense')" icon="📋" :flush="true">
+    <x-erp-listing :paginator="$expenses" :per-page="$perPage" :search="true" id="kharch">
     <x-responsive-table>
         <table class="ds-table">
             <thead>
-                <tr><th>{{ __('kharch.date') }}</th><th>{{ __('kharch.category') }}</th><th>{{ __('kharch.description') }}</th><th>{{ __('kharch.buffalo') }}</th><th>{{ __('kharch.amount') }} (₹)</th><th></th></tr>
+                <tr>
+                    <th>{{ __('common.sr_no') }}</th>
+                    <th>{{ __('kharch.date') }}</th><th>{{ __('kharch.category') }}</th><th>{{ __('kharch.description') }}</th><th>{{ __('kharch.buffalo') }}</th><th>{{ __('kharch.amount') }} (₹)</th><th></th></tr>
             </thead>
             <tbody>
                 @forelse($expenses as $e)
                 <tr>
+                    <td>{{ $expenses->firstItem() + $loop->index }}</td>
                     <td>{{ $e->expense_date->format('d/m/Y') }}</td>
                     <td><span class="badge badge-blue">{{ $e->category_label }}</span></td>
                     <td>{{ $e->description }}</td>
                     <td>{{ $e->buffalo?->tag_number ?? '—' }}</td>
                     <td><strong>₹{{ number_format($e->amount,0) }}</strong></td>
-                    <td>
+                    <td data-label="" class="mobile-card-actions erp-listing__actions">
+                        <div class="mobile-card-actions__group">
                         @if(!$e->daily_report_id)
                         <form method="POST" action="{{ route('kharch.destroy',$e) }}" onsubmit="return confirm('{{ __('kharch.delete_confirm') }}')">
                             @csrf @method('DELETE')
@@ -111,14 +116,15 @@
                         @else
                         <span class="text-muted" style="font-size:11px;">Daily Report</span>
                         @endif
+                        </div>
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="6" style="text-align:center; color:#9ca3af; padding:30px;">{{ __('kharch.no_expense') }}</td></tr>
+                <tr><td colspan="7" style="text-align:center; color:#9ca3af; padding:30px;">{{ __('kharch.no_expense') }}</td></tr>
                 @endforelse
             </tbody>
         </table>
     </x-responsive-table>
-    <div style="padding:12px 16px;">{{ $expenses->links() }}</div>
+    </x-erp-listing>
 </x-form-card>
 @endsection

@@ -43,12 +43,20 @@
 </div>
 
 <x-form-card :title="__('reports.buffalo_production')" icon="🐃" :flush="true">
+    <x-erp-listing :per-page="25" id="monthly-buffalo" :search="false" :total-meta="count($buffaloSummary) . ' total'">
+        <x-slot:toolbar>
+            <input type="search" id="monthlyBuffaloSearch" class="form-control form-control-sm" placeholder="{{ __('common.search_placeholder') }}" autocomplete="off">
+        </x-slot:toolbar>
     <x-responsive-table>
-        <table class="ds-table">
-            <thead><tr><th>{{ __('reports.tag') }}</th><th>{{ __('reports.name') }}</th><th>{{ __('reports.total') }} (L)</th><th>{{ __('reports.days') }}</th><th>{{ __('reports.average') }}</th></tr></thead>
+        <table class="ds-table" id="monthlyBuffaloTable">
+            <thead><tr>
+                <th class="erp-listing__sr-col">{{ __('common.sr_no') }}</th>
+                <th>{{ __('reports.tag') }}</th><th>{{ __('reports.name') }}</th><th>{{ __('reports.total') }} (L)</th><th>{{ __('reports.days') }}</th><th>{{ __('reports.average') }}</th>
+            </tr></thead>
             <tbody>
                 @forelse($buffaloSummary as $b)
                 <tr>
+                    <td>0</td>
                     <td><strong>{{ $b['tag'] }}</strong></td>
                     <td>{{ $b['name'] }}</td>
                     <td><strong>{{ number_format($b['total'],1) }}</strong></td>
@@ -56,20 +64,29 @@
                     <td>{{ number_format($b['avg'],1) }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="5" style="text-align:center; color:#9ca3af;">{{ __('reports.no_data') }}</td></tr>
+                <tr><td colspan="6" style="text-align:center; color:#9ca3af;">{{ __('reports.no_data') }}</td></tr>
                 @endforelse
             </tbody>
         </table>
     </x-responsive-table>
+    </x-erp-listing>
 </x-form-card>
 
 <x-form-card :title="__('reports.daily_summary')" icon="📋" :flush="true">
+    <x-erp-listing :per-page="25" id="monthly-daily" :search="false" :total-meta="$dailyMilk->count() . ' total'">
+        <x-slot:toolbar>
+            <input type="search" id="monthlyDailySearch" class="form-control form-control-sm" placeholder="{{ __('common.search_placeholder') }}" autocomplete="off">
+        </x-slot:toolbar>
     <x-responsive-table>
-        <table class="ds-table">
-            <thead><tr><th>{{ __('reports.date') }}</th><th>{{ __('reports.total') }} (L)</th></tr></thead>
+        <table class="ds-table" id="monthlyDailyTable">
+            <thead><tr>
+                <th class="erp-listing__sr-col">{{ __('common.sr_no') }}</th>
+                <th>{{ __('reports.date') }}</th><th>{{ __('reports.total') }} (L)</th>
+            </tr></thead>
             <tbody>
                 @foreach($dailyMilk as $row)
                 <tr>
+                    <td>0</td>
                     <td>{{ \Carbon\Carbon::parse($row->entry_date)->format('d/m/Y (D)') }}</td>
                     <td><strong>{{ number_format($row->total,1) }}</strong></td>
                 </tr>
@@ -77,10 +94,27 @@
             </tbody>
         </table>
     </x-responsive-table>
+    </x-erp-listing>
 </x-form-card>
 @endsection
 
 @push('scripts')
+<script src="{{ asset('static/js/erp-listing-grid.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    ErpListingGrid.initStaticTable({
+        tableId: 'monthlyBuffaloTable',
+        listingId: 'monthly-buffalo',
+        searchInputId: 'monthlyBuffaloSearch',
+        labels: { noRecords: @json(__('reports.no_data')) },
+    });
+    ErpListingGrid.initStaticTable({
+        tableId: 'monthlyDailyTable',
+        listingId: 'monthly-daily',
+        searchInputId: 'monthlyDailySearch',
+    });
+});
+</script>
 <script>
 const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
 

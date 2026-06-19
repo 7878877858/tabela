@@ -12,10 +12,14 @@ class Expense extends Model
         'amount',
         'buffalo_id',
         'notes',
+        'source',
+        'asset_maintenance_id',
     ];
     protected $casts = ['expense_date' => 'date'];
 
     public function buffalo() { return $this->belongsTo(Buffalo::class); }
+
+    public function assetMaintenance() { return $this->belongsTo(AssetMaintenance::class); }
 
    public function getCategoryLabelAttribute()
 {

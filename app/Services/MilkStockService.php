@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Buffalo;
 use App\Models\MilkEntry;
 use App\Models\MilkSale;
 use App\Models\MilkTransaction;
@@ -36,7 +37,7 @@ class MilkStockService
             'transaction_date' => $entry->entry_date->toDateString(),
             'buffalo_id'       => $entry->buffalo_id,
             'milk_entry_id'    => $entry->id,
-            'animal_type'      => $entry->buffalo?->animal_type ?? 'buffalo',
+            'animal_type'      => self::resolveAnimalType($entry->buffalo?->animal_type),
         ];
 
         if ($delta > 0) {
@@ -88,9 +89,14 @@ class MilkStockService
             'transaction_date' => $entry->entry_date->toDateString(),
             'buffalo_id'       => $entry->buffalo_id,
             'milk_entry_id'    => $entry->id,
-            'animal_type'      => $entry->buffalo?->animal_type ?? 'buffalo',
+            'animal_type'      => self::resolveAnimalType($entry->buffalo?->animal_type),
             'remarks'          => 'Milk entry deleted',
         ]);
+    }
+
+    protected static function resolveAnimalType(?string $type): string
+    {
+        return Buffalo::normalizeAnimalType($type ?? 'buffalo');
     }
 
     protected static function record(
@@ -122,7 +128,9 @@ class MilkStockService
                 'direction'        => $direction,
                 'balance_after'    => $newBalance,
                 'transaction_date' => $meta['transaction_date'] ?? today()->toDateString(),
-                'animal_type'      => $meta['animal_type'] ?? null,
+                'animal_type'      => isset($meta['animal_type'])
+                    ? self::resolveAnimalType($meta['animal_type'])
+                    : null,
                 'buffalo_id'       => $meta['buffalo_id'] ?? null,
                 'milk_entry_id'    => $meta['milk_entry_id'] ?? null,
                 'milk_sale_id'     => $meta['milk_sale_id'] ?? null,

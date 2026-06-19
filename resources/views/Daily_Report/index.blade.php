@@ -20,11 +20,12 @@
 </div>
 
 <x-form-card title="રિપોર્ટ યાદી" icon="📑" :flush="true">
+    <x-erp-listing :paginator="$reports" :per-page="$perPage" :search="true" search-placeholder="અહેવાલ / બનાવનાર શોધો..." id="daily-reports">
     <x-responsive-table>
         <table class="ds-table">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th>{{ __('common.sr_no') }}</th>
                     <th>તારીખ</th>
                     <th>શિફ્ટ</th>
                     <th>અહેવાલ નંબર</th>
@@ -35,13 +36,13 @@
             <tbody>
                 @forelse($reports as $report)
                 <tr class="dr-list-row">
-                    <td data-label="#">{{ $reports->firstItem() + $loop->index }}</td>
+                    <td data-label="{{ __('common.sr_no') }}">{{ $reports->firstItem() + $loop->index }}</td>
                     <td data-label="તારીખ">{{ $report->report_date->format('d-m-Y') }}</td>
                     <td data-label="શિફ્ટ">{{ $report->shift ?? '—' }}</td>
                     <td data-label="અહેવાલ">{{ $report->report_number ?? ('DR-' . $report->id) }}</td>
                     <td data-label="બનાવનાર">{{ $report->reporter ?? '—' }}</td>
-                    <td data-label="" class="dr-row-actions action-column">
-                        <div class="dr-action-group action-buttons">
+                    <td data-label="" class="mobile-card-actions erp-listing__actions dr-row-actions action-column">
+                        <div class="mobile-card-actions__group dr-action-group action-buttons">
                             <a href="{{ route('daily-reports.show', $report) }}" class="btn btn-outline btn-sm dr-action-btn" title="View">👁</a>
                             <a href="{{ route('daily-reports.edit', $report) }}" class="btn btn-ghost btn-sm dr-action-btn" title="Edit">✏️</a>
                             <form method="POST" action="{{ route('daily-reports.destroy', $report) }}" class="dr-action-form action-form" onsubmit="return confirm('શું તમે ખરેખર ડિલીટ કરવા માંગો છો?')">
@@ -57,11 +58,38 @@
             </tbody>
         </table>
     </x-responsive-table>
+    </x-erp-listing>
 </x-form-card>
-@if($reports->hasPages())
-<div class="card" style="margin-top:12px;padding:12px 16px;">{{ $reports->links() }}</div>
-@endif
 
 </div>
+
+@if(session('clear_daily_report_draft'))
+@push('scripts')
+<script>
+(function () {
+    const DB_NAME = 'tabela_daily_report';
+    const STORE = 'drafts';
+    const LS_KEY = 'daily_report_draft_v2';
+    try {
+        localStorage.removeItem(LS_KEY);
+        localStorage.removeItem('daily_report_draft');
+    } catch (e) {}
+    if ('indexedDB' in window) {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = function () {
+            const db = req.result;
+            if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+        };
+        req.onsuccess = function () {
+            const db = req.result;
+            if (!db.objectStoreNames.contains(STORE)) return;
+            const tx = db.transaction(STORE, 'readwrite');
+            tx.objectStore(STORE).clear();
+        };
+    }
+})();
+</script>
+@endpush
+@endif
 
 @endsection

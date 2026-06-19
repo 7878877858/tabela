@@ -4,16 +4,38 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\Employee;
+use App\Support\ListPagination;
+use App\Support\ListingSearch;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-     public function index()
+     public function index(Request $request)
     {
-        $tasks = Task::latest()->get();
+        $perPage = ListPagination::resolvePerPage($request);
+        $search = ListingSearch::term($request->get('search'));
+
+        $taskQuery = Task::with('employee')->latest();
+        if ($search) {
+            $term = ListingSearch::likeTerm($search);
+            $taskQuery->where(function ($q) use ($term) {
+                $q->where('title', 'like', $term)
+                    ->orWhere('description', 'like', $term)
+                    ->orWhereHas('employee', fn ($e) => $e->where('name', 'like', $term));
+            });
+        }
+
+        $taskStats = [
+            'total' => Task::count(),
+            'pending' => Task::where('status', 'pending')->count(),
+            'in_progress' => Task::where('status', 'in_progress')->count(),
+            'completed' => Task::where('status', 'completed')->count(),
+        ];
+
+        $tasks = $taskQuery->paginate($perPage)->withQueryString();
         $employees = Employee::orderBy('name')->get();
 
-        return view('tasks.index', compact('tasks','employees'));
+        return view('tasks.index', compact('tasks', 'employees', 'taskStats', 'perPage', 'search'));
     }
 
     public function create()

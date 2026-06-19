@@ -20,7 +20,8 @@
         ];
     })->values();
     $feedColCount = max($feeds->count(), 1);
-    $feedSubColPct = number_format(28 / $feedColCount, 4, '.', '');
+    $feedDataCols = $feeds->count() * 2;
+    $feedColWidth = $feedDataCols > 0 ? number_format(58 / $feedDataCols, 4, '.', '') : '14';
 @endphp
 
 @if($feeds->isEmpty())
@@ -53,55 +54,61 @@
 </div>
 
 <div class="table-responsive feed-grid-wrap">
-    <table class="table table-bordered feed-grid-table feed-table" id="feedGridTable">
+    <table class="feed-grid-table feed-table" id="feedGridTable">
         <colgroup>
-            <col style="width:12%">
-            <col style="width:18%">
+            <col class="feed-col-sr">
+            <col class="feed-col-tag">
+            <col class="feed-col-name">
             @foreach($feeds as $feed)
-            <col style="width:{{ $feedSubColPct }}%">
+            <col class="feed-col-qty">
             @endforeach
             @if($feeds->isEmpty())
-            <col style="width:{{ $feedSubColPct }}%">
+            <col class="feed-col-qty">
             @endif
             @foreach($feeds as $feed)
-            <col style="width:{{ $feedSubColPct }}%">
+            <col class="feed-col-qty">
             @endforeach
             @if($feeds->isEmpty())
-            <col style="width:{{ $feedSubColPct }}%">
+            <col class="feed-col-qty">
             @endif
-            <col style="width:14%">
+            <col class="feed-col-total">
         </colgroup>
         <thead>
             <tr>
-                <th rowspan="2">ટેગ નં.</th>
-                <th rowspan="2">પશુ નામ</th>
-                <th colspan="{{ $feedColCount }}" class="feed-period-group">🌅 સવાર (Morning)</th>
-                <th colspan="{{ $feedColCount }}" class="feed-period-group feed-period-evening">🌇 સાંજ (Evening)</th>
-                <th rowspan="2">કુલ ચારો</th>
-            </tr>
-            <tr>
+                <th class="feed-th feed-th--sticky feed-th--sr dr-grid-sr-col">ક્રમ</th>
+                <th class="feed-th feed-th--sticky feed-th--tag">ટેગ નં.</th>
+                <th class="feed-th feed-th--sticky feed-th--name">પશુ નામ</th>
                 @foreach($feeds as $feed)
-                <th class="feed-col-morning" data-feed-id="{{ $feed->id }}" data-stock="{{ $feed->available_quantity ?? 0 }}" title="સ્ટોક: {{ number_format($feed->available_quantity ?? 0, 2) }}">
-                    {{ $feed->name }}
+                <th class="feed-th feed-th--morning" data-feed-id="{{ $feed->id }}" data-stock="{{ $feed->available_quantity ?? 0 }}" title="સ્ટોક: {{ number_format($feed->available_quantity ?? 0, 2) }}">
+                    <span class="feed-th__badge">🌅 સવાર</span>
+                    <span class="feed-th__label">{{ $feed->name }}</span>
                 </th>
                 @endforeach
                 @if($feeds->isEmpty())
-                <th class="feed-col-morning">ચારો</th>
+                <th class="feed-th feed-th--morning">
+                    <span class="feed-th__badge">🌅 સવાર</span>
+                    <span class="feed-th__label">ચારો</span>
+                </th>
                 @endif
                 @foreach($feeds as $feed)
-                <th class="feed-col-evening feed-period-evening" data-feed-id="{{ $feed->id }}" data-stock="{{ $feed->available_quantity ?? 0 }}">
-                    {{ $feed->name }}
+                <th class="feed-th feed-th--evening" data-feed-id="{{ $feed->id }}" data-stock="{{ $feed->available_quantity ?? 0 }}" title="સ્ટોક: {{ number_format($feed->available_quantity ?? 0, 2) }}">
+                    <span class="feed-th__badge">🌇 સાંજ</span>
+                    <span class="feed-th__label">{{ $feed->name }}</span>
                 </th>
                 @endforeach
                 @if($feeds->isEmpty())
-                <th class="feed-col-evening feed-period-evening">ચારો</th>
+                <th class="feed-th feed-th--evening">
+                    <span class="feed-th__badge">🌇 સાંજ</span>
+                    <span class="feed-th__label">ચારો</span>
+                </th>
                 @endif
+                <th class="feed-th feed-th--total">કુલ ચારો</th>
             </tr>
         </thead>
         <tbody id="feedGridBody"></tbody>
         <tfoot>
             <tr class="feed-summary-row">
-                <td colspan="2">કુલ સારાંશ</td>
+                <td colspan="3">કુલ સારાંશ</td>
                 @foreach($feeds as $feed)
                 <td><span class="summary-morning" data-feed-id="{{ $feed->id }}">0</span></td>
                 @endforeach

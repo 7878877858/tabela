@@ -1,0 +1,76 @@
+/* Tom Select — ERP animal picker */
+.animal-select-wrap {
+    position: relative;
+}
+
+select.animal-select:not(.ts-hidden-accessible) {
+    width: 100%;
+    min-height: 40px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    background: #fff;
+}
+
+.ts-wrapper.animal-ts {
+    width: 100%;
+}
+
+.ts-wrapper.animal-ts .ts-control {
+    min-height: 38px;
+    padding: 6px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 13px;
+    background: #fff;
+    box-shadow: none;
+}
+
+.ts-wrapper.animal-ts.focus .ts-control {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.ts-wrapper.animal-ts .ts-control input {
+    font-size: 13px;
+}
+
+.ts-wrapper.animal-ts .ts-dropdown {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    font-size: 13px;
+}
+
+/* z-index handled globally in dropdown-overflow.css */
+
+.ts-wrapper.milk-customer-ts .ts-dropdown {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    font-size: 13px;
+}
+
+.ts-wrapper.milk-customer-ts {
+    width: 100%;
+}
+
+.ts-wrapper.animal-ts .ts-dropdown .option {
+    padding: 8px 12px;
+}
+
+.ts-wrapper.animal-ts .ts-dropdown .active {
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+.ts-wrapper.animal-ts .item {
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .ts-wrapper.animal-ts .ts-dropdown {
+        max-height: 50vh;
+    }
+}

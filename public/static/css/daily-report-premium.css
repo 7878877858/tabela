@@ -1,0 +1,679 @@
+/**
+ * Daily Report — Premium Dairy ERP UI layer (visual only).
+ */
+.daily-report-page {
+    --dr-primary: #1d4ed8;
+    --dr-primary-dark: #1e40af;
+    --dr-secondary: #0ea5e9;
+    --dr-success: #10b981;
+    --dr-warning: #f59e0b;
+    --dr-danger: #ef4444;
+    --dr-bg: #f8fafc;
+    --dr-surface: #ffffff;
+    --dr-border: #e2e8f0;
+    --dr-text: #0f172a;
+    --dr-text-muted: #64748b;
+    --dr-radius: 16px;
+    --dr-radius-sm: 10px;
+    --dr-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+    --dr-shadow-lg: 0 12px 40px rgba(29, 78, 216, 0.1);
+    --dr-glass: rgba(255, 255, 255, 0.72);
+    background: var(--dr-bg);
+    min-height: 100vh;
+}
+
+.daily-report-page > .container-fluid {
+    max-width: 1400px;
+    padding-bottom: 32px;
+}
+
+/* ─── Premium page header ─── */
+.daily-report-page .dr-page-hero--premium {
+    margin-bottom: 18px !important;
+    border: none !important;
+    border-radius: var(--dr-radius) !important;
+    overflow: hidden;
+    box-shadow: var(--dr-shadow-lg);
+    background: linear-gradient(135deg, var(--dr-primary-dark) 0%, var(--dr-primary) 42%, var(--dr-secondary) 100%);
+    animation: drFadeIn 0.45s ease;
+}
+
+.daily-report-page .dr-page-hero--premium .dr-page-hero__glass {
+    padding: 20px 24px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.daily-report-page .dr-page-hero__main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.daily-report-page .dr-page-hero__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    flex-shrink: 0;
+}
+
+.daily-report-page .dr-page-hero__title {
+    font-size: 1.35rem !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    margin: 0 0 4px !important;
+    letter-spacing: 0.2px;
+}
+
+.daily-report-page .dr-page-hero__subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.82);
+    font-weight: 500;
+}
+
+.daily-report-page .dr-page-hero__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.daily-report-page .dr-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(6px);
+    white-space: nowrap;
+}
+
+.daily-report-page .dr-hero-badge i {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+.daily-report-page .dr-hero-badge--save.is-saving {
+    background: rgba(245, 158, 11, 0.25);
+    border-color: rgba(245, 158, 11, 0.45);
+}
+
+.daily-report-page .dr-hero-badge--save.is-saved {
+    background: rgba(16, 185, 129, 0.25);
+    border-color: rgba(16, 185, 129, 0.45);
+}
+
+.daily-report-page .dr-hero-badge--progress {
+    background: rgba(255, 255, 255, 0.22);
+    font-variant-numeric: tabular-nums;
+}
+
+.daily-report-page .dr-hero-badge--progress strong {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+/* ─── Wizard shell & progress ─── */
+.daily-report-page .dr-wizard-shell {
+    margin-bottom: 18px;
+    animation: drSlideUp 0.4s ease 0.05s both;
+}
+
+.daily-report-page .dr-wizard-progress {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+    padding: 0 4px;
+}
+
+.daily-report-page .dr-wizard-progress__track {
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.daily-report-page .dr-wizard-progress__fill {
+    height: 100%;
+    width: 10%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--dr-primary), var(--dr-secondary));
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 12px rgba(29, 78, 216, 0.35);
+}
+
+.daily-report-page .dr-wizard-progress__label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--dr-text-muted);
+    white-space: nowrap;
+    min-width: 72px;
+    text-align: right;
+}
+
+.daily-report-page .dr-step-nav--premium {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0;
+    padding: 14px 12px;
+    margin-bottom: 0;
+    background: var(--dr-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: var(--dr-radius);
+    box-shadow: var(--dr-shadow);
+    position: sticky;
+    top: 56px;
+    z-index: 100;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.daily-report-page .dr-step-nav--premium .dr-step-nav__item {
+    flex: 1 1 auto;
+    min-width: 88px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 8px;
+    border-radius: var(--dr-radius-sm);
+    position: relative;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.2;
+    border: 1px solid transparent;
+}
+
+.daily-report-page .dr-step-nav--premium .dr-step-nav__item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 22px;
+    right: -1px;
+    width: 2px;
+    height: 20px;
+    background: #e2e8f0;
+    z-index: 0;
+}
+
+.daily-report-page .dr-step-nav--premium .dr-step-nav__num {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    background: #f1f5f9;
+    color: var(--dr-text-muted);
+    border: 2px solid #e2e8f0;
+    transition: all 0.25s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.daily-report-page .dr-step-nav--premium .dr-step-nav__item.is-active {
+    background: linear-gradient(180deg, rgba(29, 78, 216, 0.1), rgba(14, 165, 233, 0.06));
+    color: var(--dr-primary);
+    border-color: rgba(29, 78, 216, 0.2);
+}
+
+.daily-report-page .dr-step-nav--premium .dr-step-nav__item.is-active .dr-step-nav__num {
+    background: linear-gradient(135deg, var(--dr-primary), var(--dr-secondary));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.35);
+    transform: scale(1.08);
+}
+
+.daily-report-page .dr-step-nav--premium .dr-step-nav__item.is-complete .dr-step-nav__num {
+    background: var(--dr-success);
+    color: #fff;
+    border-color: var(--dr-success);
+    font-size: 0;
+}
+
+.daily-report-page .dr-step-nav--premium .dr-step-nav__item.is-complete .dr-step-nav__num::before {
+    content: '✓';
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 28px;
+}
+
+.daily-report-page .dr-step-nav--premium .dr-step-nav__item.is-complete:not(.is-active) {
+    color: #047857;
+}
+
+.daily-report-page .dr-step-nav--premium .dr-step-nav__label {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ─── Section cards ─── */
+.daily-report-page .dr-section-card {
+    border-radius: var(--dr-radius) !important;
+    border: 1px solid var(--dr-border) !important;
+    box-shadow: var(--dr-shadow) !important;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    animation: drFadeIn 0.4s ease;
+}
+
+.daily-report-page .dr-section-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--dr-shadow-lg) !important;
+}
+
+.daily-report-page .dr-section-card > .card-header {
+    background: linear-gradient(135deg, var(--dr-primary-dark) 0%, var(--dr-primary) 50%, #2563eb 100%) !important;
+    color: #fff !important;
+    border-bottom: none !important;
+}
+
+.daily-report-page .dr-section-card > .card-header .dr-collapsible-title {
+    color: #fff !important;
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.daily-report-page .dr-section-card > .card-header .dr-section-toggle,
+.daily-report-page .dr-section-card > .card-header .dr-section-add-btn {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.daily-report-page .dr-section-card > .card-header .dr-section-add-btn:hover {
+    color: #fff !important;
+    transform: scale(1.1);
+}
+
+.daily-report-page .dr-section-content {
+    padding: 18px !important;
+}
+
+.daily-report-page .dr-step-section.is-current {
+    animation: drStepIn 0.38s ease;
+}
+
+.daily-report-page .dr-collapsible-section:not(.is-collapsed) .dr-collapsible-content {
+    animation: drContentIn 0.32s ease;
+}
+
+/* ─── KPI metric cards (summary) ─── */
+.daily-report-page .dr-metric-card {
+    border-radius: var(--dr-radius-sm) !important;
+    border: 1px solid var(--dr-border) !important;
+    background: linear-gradient(145deg, #fff 0%, #f8fafc 100%) !important;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 88px !important;
+}
+
+.daily-report-page .dr-metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(29, 78, 216, 0.1) !important;
+}
+
+.daily-report-page .dr-metric-card__value {
+    font-size: 26px !important;
+    background: linear-gradient(135deg, var(--dr-primary), var(--dr-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.daily-report-page .dr-metric-card.blue { border-left: 4px solid var(--dr-primary) !important; }
+.daily-report-page .dr-metric-card.green { border-left: 4px solid var(--dr-success) !important; }
+.daily-report-page .dr-metric-card.orange { border-left: 4px solid var(--dr-warning) !important; }
+.daily-report-page .dr-metric-card.red { border-left: 4px solid var(--dr-danger) !important; }
+.daily-report-page .dr-metric-card.purple { border-left: 4px solid #8b5cf6 !important; }
+
+/* ─── Form controls ─── */
+.daily-report-page .form-control,
+.daily-report-page select.form-control {
+    height: 42px !important;
+    min-height: 42px !important;
+    border-radius: var(--dr-radius-sm) !important;
+    border-color: #cbd5e1 !important;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.daily-report-page .form-control::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+.daily-report-page .form-control:focus,
+.daily-report-page select.form-control:focus {
+    border-color: var(--dr-primary) !important;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15) !important;
+    outline: none;
+}
+
+.daily-report-page label,
+.daily-report-page .form-label {
+    font-weight: 600 !important;
+    color: #334155 !important;
+    margin-bottom: 6px !important;
+}
+
+.daily-report-page .form-control.is-invalid,
+.daily-report-page select.is-invalid {
+    border-color: var(--dr-danger) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* ─── Buttons ─── */
+.daily-report-page .btn {
+    border-radius: var(--dr-radius-sm);
+    font-weight: 600;
+    padding: 10px 18px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s;
+}
+
+.daily-report-page .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.daily-report-page .btn-primary {
+    background: linear-gradient(135deg, var(--dr-primary), #2563eb) !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(29, 78, 216, 0.3);
+}
+
+.daily-report-page .btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(29, 78, 216, 0.4);
+}
+
+.daily-report-page .btn-success,
+.daily-report-page .dr-save-btn {
+    background: linear-gradient(135deg, #059669, var(--dr-success)) !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.daily-report-page .btn-outline-secondary {
+    border-color: #cbd5e1;
+    color: #475569;
+    background: #fff;
+}
+
+.daily-report-page .dr-section-add-btn {
+    transition: transform 0.15s ease, color 0.15s;
+}
+
+.daily-report-page .dr-section-add-btn:hover {
+    transform: scale(1.15);
+    color: #86efac !important;
+}
+
+/* ─── Tables ─── */
+.daily-report-page .dr-section-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: linear-gradient(180deg, #f8fafc, #f1f5f9) !important;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #475569 !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    padding: 12px 14px !important;
+}
+
+.daily-report-page .dr-section-table tbody td {
+    padding: 12px 14px !important;
+    vertical-align: middle;
+    border-color: #f1f5f9 !important;
+}
+
+.daily-report-page .dr-section-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.daily-report-page .dr-section-table tbody tr:hover {
+    background: rgba(29, 78, 216, 0.03) !important;
+}
+
+.daily-report-page .milk-grid-table thead th,
+.daily-report-page .feed-grid-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: linear-gradient(180deg, #f8fafc, #f1f5f9) !important;
+}
+
+.daily-report-page .milk-grid-table tbody tr:hover,
+.daily-report-page .feed-grid-table tbody tr:hover {
+    background: rgba(29, 78, 216, 0.04);
+}
+
+/* ─── Summary bars & KPI pills ─── */
+.daily-report-page .milk-summary-bar,
+.daily-report-page .feed-summary-bar,
+.daily-report-page .dist-summary-bar {
+    background: linear-gradient(135deg, rgba(29, 78, 216, 0.06), rgba(14, 165, 233, 0.08)) !important;
+    border: 1px solid rgba(29, 78, 216, 0.12) !important;
+    border-radius: var(--dr-radius-sm) !important;
+    padding: 12px 16px !important;
+    font-weight: 500;
+}
+
+.daily-report-page .milk-summary-bar strong,
+.daily-report-page .feed-summary-bar strong,
+.daily-report-page .dist-summary-bar strong {
+    color: var(--dr-primary);
+}
+
+.daily-report-page .milk-sticky-summary {
+    background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+    border-radius: var(--dr-radius-sm) !important;
+    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.2);
+}
+
+.daily-report-page .dr-kpi-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    margin-left: auto;
+}
+
+.daily-report-page .dr-kpi-pill--expense {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(252, 165, 165, 0.5);
+}
+
+.daily-report-page .dr-auto-income-card,
+.daily-report-page #dairyCollectionSection .erp-panel {
+    border-radius: var(--dr-radius-sm) !important;
+    border: 1px solid var(--dr-border) !important;
+    background: linear-gradient(145deg, #fff, #f8fafc) !important;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    transition: transform 0.2s ease;
+}
+
+.daily-report-page .dr-auto-income-card:hover,
+.daily-report-page #dairyCollectionSection .erp-panel:hover {
+    transform: translateY(-2px);
+}
+
+.daily-report-page .dr-auto-income-card .h4 {
+    background: linear-gradient(135deg, var(--dr-primary), var(--dr-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.daily-report-page #milkDistributionSection .dr-dist-badge {
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    font-weight: 700;
+}
+
+/* ─── Animal type tabs ─── */
+.daily-report-page .dr-animal-tab {
+    border-radius: var(--dr-radius-sm) !important;
+    transition: all 0.2s ease;
+}
+
+.daily-report-page .dr-animal-tab.is-active {
+    background: linear-gradient(135deg, var(--dr-primary), #2563eb) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+}
+
+.daily-report-page .dr-animal-tab.is-active .dr-animal-tab__count {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #fff !important;
+}
+
+/* ─── Wizard footer ─── */
+.daily-report-page .dr-wizard-footer {
+    border-radius: var(--dr-radius) !important;
+    background: var(--dr-glass) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.9) !important;
+    box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.1) !important;
+    padding: 16px 20px !important;
+}
+
+.daily-report-page .dr-wizard-footer.is-final-step {
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    background: linear-gradient(180deg, rgba(240, 253, 244, 0.95), #fff) !important;
+}
+
+/* ─── Grid toolbar ─── */
+.daily-report-page .dr-grid-toolbar {
+    background: #f8fafc;
+    border: 1px solid var(--dr-border);
+    border-radius: var(--dr-radius-sm);
+    padding: 10px 12px;
+}
+
+/* ─── Animations ─── */
+@keyframes drFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes drSlideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drStepIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drContentIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Draft badge integration ─── */
+#dailyReportDraftBadge {
+    border-radius: var(--dr-radius-sm) !important;
+    box-shadow: var(--dr-shadow-lg) !important;
+}
+
+.daily-report-page #expenseSection .dr-collapsible-header-inner {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.daily-report-page #expenseSection .dr-kpi-pill {
+    margin-left: 0;
+    order: 2;
+}
+
+.daily-report-page #expenseSection .dr-section-header-actions {
+    order: 3;
+    margin-left: auto;
+}
+
+.daily-report-page #expenseSection .dr-collapsible-title {
+    order: 1;
+    flex: 1 1 140px;
+}
+
+/* ─── Income section KPI cards ─── */
+.daily-report-page #incomeSection .dr-auto-income-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.daily-report-page #incomeSection .dr-auto-income-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--dr-primary), var(--dr-secondary));
+}
+
+/* ─── Dairy collection KPI ─── */
+.daily-report-page #dairyCollectionSection .ds-stats-grid .erp-panel .h5 {
+    color: var(--dr-primary);
+    font-weight: 800;
+}
+
+@media (max-width: 767.98px) {
+    .daily-report-page .dr-page-hero__main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .daily-report-page .dr-page-hero__badges {
+        width: 100%;
+    }
+
+    .daily-report-page .dr-hero-badge {
+        flex: 1 1 calc(50% - 5px);
+        justify-content: center;
+        font-size: 11px;
+        padding: 7px 10px;
+    }
+
+    .daily-report-page .dr-step-nav--premium .dr-step-nav__item {
+        min-width: 72px;
+        padding: 8px 6px;
+        font-size: 10px;
+    }
+
+    .daily-report-page .dr-step-nav--premium .dr-step-nav__num {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+    }
+
+    .daily-report-page .dr-section-card:hover {
+        transform: none;
+    }
+}

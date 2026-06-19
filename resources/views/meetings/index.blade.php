@@ -34,6 +34,33 @@
   .mt-toolbar { gap:8px; }
   .mt-tabs { width:100%; }
   .mt-tab { flex:1; text-align:center; padding:6px 8px; }
+  .mt-actions.mobile-card-actions {
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e8e8e8;
+    margin-top: 8px;
+  }
+  .mt-actions .mt-btn {
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
+    font-size: 0;
+    overflow: hidden;
+  }
+  .mt-actions .mt-btn i {
+    font-size: 16px;
+    margin: 0;
+  }
+  .mt-actions form {
+    flex: 0 0 auto;
+    display: inline-flex;
+    margin: 0;
+  }
 }
 @media (max-width: 480px) {
   .mt-header { flex-direction:column; gap:10px; }
@@ -57,26 +84,26 @@
 
   {{-- Stats --}}
   @php
-    $cntToday    = $meetings->filter(fn($m) => \Carbon\Carbon::parse($m->meeting_date)->isToday())->count();
-    $cntUpcoming = $meetings->filter(fn($m) => \Carbon\Carbon::parse($m->meeting_date)->isFuture() && !\Carbon\Carbon::parse($m->meeting_date)->isToday())->count();
-    $cntDone     = $meetings->where('status','completed')->count();
+    $cntToday = $meetingStats['today'] ?? 0;
+    $cntUpcoming = $meetingStats['upcoming'] ?? 0;
+    $cntDone = $meetingStats['completed'] ?? 0;
   @endphp
   <div class="mt-stats">
     <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8e8e8">
       <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">{{ __('Meetings.total') }}</div>
-      <div style="font-size:26px;font-weight:700;color:#185FA5">{{ $meetings->count() }}</div>
+      <div style="font-size:26px;font-weight:700;color:#185FA5">{{ $meetingStats['total'] ?? 0 }}</div>
     </div>
     <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8e8e8">
       <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">{{ __('Meetings.today') }}</div>
-      <div style="font-size:26px;font-weight:700;color:#1D9E75">{{ $cntToday }}</div>
+      <div style="font-size:26px;font-weight:700;color:#1D9E75">{{ $meetingStats['today'] ?? 0 }}</div>
     </div>
     <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8e8e8">
       <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">{{ __('Meetings.upcoming') }}</div>
-      <div style="font-size:26px;font-weight:700;color:#BA7517">{{ $cntUpcoming }}</div>
+      <div style="font-size:26px;font-weight:700;color:#BA7517">{{ $meetingStats['upcoming'] ?? 0 }}</div>
     </div>
     <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8e8e8">
       <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">{{ __('Meetings.completed') }}</div>
-      <div style="font-size:26px;font-weight:700;color:#888">{{ $cntDone }}</div>
+      <div style="font-size:26px;font-weight:700;color:#888">{{ $meetingStats['completed'] ?? 0 }}</div>
     </div>
   </div>
 
@@ -100,7 +127,8 @@
   </div>
 
   {{-- Cards --}}
-  @if($meetings->count())
+  @if($meetings->total())
+  <x-erp-listing :paginator="$meetings" :per-page="$perPage" :search="true" search-placeholder="મીટિંગ શોધો..." id="meetings">
   <div class="mt-grid" id="mtGrid">
     @foreach($meetings as $meeting)
     @php
@@ -121,7 +149,7 @@
           <div style="font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:5px">{{ $meeting->title }}</div>
           <span style="font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500;{{ $bStyle }}">{{ ucfirst($st) }}</span>
         </div>
-        <span style="font-size:11px;color:#ccc">#{{ $meeting->id }}</span>
+        <span style="font-size:11px;color:#ccc">{{ __('common.sr_no') }} {{ $meetings->firstItem() + $loop->index }}</span>
       </div>
 
       <div class="mt-meta-box">
@@ -139,7 +167,7 @@
         </div>
       </div>
 
-      <div class="mt-actions">
+      <div class="mt-actions mobile-card-actions">
         <a href="{{ route('meetings.show',$meeting->id) }}" class="mt-btn mt-btn-view">
           <i class="ti ti-eye" style="font-size:14px"></i> {{ __('Meetings.view') }}
         </a>
@@ -156,6 +184,7 @@
     </div>
     @endforeach
   </div>
+  </x-erp-listing>
 
   @else
   <div style="background:#fff;border-radius:12px;border:1px solid #e8e8e8;padding:60px 20px;text-align:center">

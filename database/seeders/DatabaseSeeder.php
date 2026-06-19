@@ -34,5 +34,10 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ]));
         }
+        $this->call([
+            BuffaloSeeder::class,
+            MilkCustomerSeeder::class,
+        ]);
     }
+    
 }

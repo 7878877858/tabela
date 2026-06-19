@@ -13,9 +13,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('assets/css/design-system.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/sidebar.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/mobile.css') }}">
+    <link rel="stylesheet" href="{{ asset('static/css/design-system.css') }}">
+    <link rel="stylesheet" href="{{ asset('static/css/dropdown-overflow.css') }}">
+    <link rel="stylesheet" href="{{ asset('static/css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ asset('static/css/mobile.css') }}">
 
     @php
     $primary = \App\Models\Setting::get('primary_color', '#16a34a');
@@ -430,7 +431,7 @@
         </main>
     </div>
 
-    <script src="{{ asset('assets/js/sidebar.js') }}"></script>
+    <script src="{{ asset('static/js/sidebar.js') }}"></script>
 
     {{-- Global date picker: click/focus/tap anywhere on field opens calendar --}}
     <script>
@@ -512,6 +513,8 @@
     })();
     </script>
 
+    @php $erpSelectVer = @filemtime(public_path('static/js/erp-select.js')) ?: '1'; @endphp
+    <script src="{{ asset('static/js/erp-select.js') }}?v={{ $erpSelectVer }}"></script>
     @stack('scripts')
 </body>
 

@@ -447,30 +447,7 @@
                     4. બચ્ચા જન્મ વિગત
                 </div>
 
-                <table class="report-table">
-
-                    <tr>
-                        <th width="5%">પશુ નં.</th>
-                        <th>જન્મ તારીખ</th>
-                        <th>વાછરડાના ટેગ નં.</th>
-                    </tr>
-
-                    @forelse($births as $birth)
-                    <tr>
-                        <td>{{ $birth->tag_number }}</td>
-                        <td>{{ $birth->birth_date }}</td>
-                        <td>
-                            {{ $birth->calf_tag_number }}
-                            ({{ ucfirst($birth->calf_gender) }})
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="3">ડેટા નથી</td>
-                    </tr>
-                    @endforelse
-
-                </table>
+                @include('Daily_Report.partials._calf_birth_table', ['births' => $births])
 
             </td>
 

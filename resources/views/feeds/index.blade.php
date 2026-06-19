@@ -6,13 +6,16 @@
 <x-section-header title="Feed Inventory" icon="🌾" subtitle="Stock IN via purchase · Stock OUT via Daily Report consumption">
     <x-slot:actions>
         <a href="{{ route('feeds.history') }}" class="btn btn-outline btn-sm">📒 Stock History</a>
-        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('stockInModal').classList.add('open')">➕ Add Stock</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('stockInModal').classList.add('open')">➕ Add Stock IN</button>
         <a href="{{ route('feeds.create') }}" class="btn btn-success btn-sm">➕ New Feed Type</a>
     </x-slot:actions>
 </x-section-header>
 
 @if(session('success'))
 <div class="alert alert-success">{{ session('success') }}</div>
+@endif
+@if(session('info'))
+<div class="alert alert-info">{{ session('info') }}</div>
 @endif
 
 <div class="ds-stats-grid ds-stats-grid-4">
@@ -23,11 +26,12 @@
 </div>
 
 <x-form-card title="Feed Stock List" icon="📋" :flush="true">
+    <x-erp-listing :paginator="$feeds" :per-page="$perPage" :search="true" search-placeholder="ફીડ નામ શોધો..." id="feeds">
     <x-responsive-table>
         <table class="ds-table">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th>{{ __('common.sr_no') }}</th>
                     <th>Feed Name</th>
                     <th class="text-end">Available Qty</th>
                     <th class="text-center">Unit</th>
@@ -39,7 +43,7 @@
             <tbody>
                 @forelse($feeds as $feed)
                 <tr>
-                    <td data-label="#">{{ $feeds->firstItem() + $loop->index }}</td>
+                    <td data-label="{{ __('common.sr_no') }}">{{ $feeds->firstItem() + $loop->index }}</td>
                     <td data-label="Feed">
                         <strong>{{ $feed->name }}</strong>
                         @if($feed->description)
@@ -65,14 +69,16 @@
                         <span class="text-muted">—</span>
                         @endif
                     </td>
-                    <td class="text-center" data-label="" style="white-space:nowrap;">
+                    <td data-label="" class="mobile-card-actions erp-listing__actions" style="white-space:nowrap;">
+                        <div class="mobile-card-actions__group">
                         <a href="{{ route('feeds.show', $feed) }}" class="btn btn-outline btn-sm" title="Ledger">👁</a>
                         <a href="{{ route('feeds.edit', $feed) }}" class="btn btn-ghost btn-sm" title="Edit">✏️</a>
                         <button type="button" class="btn btn-primary btn-sm" title="Add Stock" onclick="openStockInFor({{ $feed->id }})">➕</button>
-                        <form method="POST" action="{{ route('feeds.destroy', $feed) }}" class="d-inline" style="display:inline;" onsubmit="return confirm('Delete this feed type?')">
+                        <form method="POST" action="{{ route('feeds.destroy', $feed) }}" class="d-inline" onsubmit="return confirm('Delete this feed type?')">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm" title="Delete">🗑</button>
                         </form>
+                        </div>
                     </td>
                 </tr>
                 @empty
@@ -81,10 +87,8 @@
             </tbody>
         </table>
     </x-responsive-table>
+    </x-erp-listing>
 </x-form-card>
-@if($feeds->hasPages())
-<div class="card" style="margin-top:-8px;padding:12px 16px;">{{ $feeds->links() }}</div>
-@endif
 
 <div id="stockInModal" class="ds-modal" role="dialog">
     <div class="ds-modal__backdrop" onclick="document.getElementById('stockInModal').classList.remove('open')"></div>

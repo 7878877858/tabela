@@ -42,11 +42,13 @@
 </x-form-card>
 
 {{-- List --}}
+<x-erp-listing :paginator="$employees" :per-page="$perPage" :search="true" search-placeholder="નામ / મોબાઇલ શોધો..." id="employees">
 @foreach($employees as $emp)
 <x-form-card style="margin-bottom:16px;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+    <div class="employee-list-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
         <div>
             <h3 style="font-size:16px; font-weight:700;">
+    <span class="text-muted" style="font-size:13px;margin-right:6px;">{{ __('common.sr_no') }} {{ $employees->firstItem() + $loop->index }}</span>
     {{ $emp->name }}
 
     <span class="badge {{ $emp->status==='active' ? 'badge-green' : 'badge-gray' }}"
@@ -69,7 +71,7 @@
             </h3> -->
             <p style="font-size:13px; color:#6b7280;">📞 {{ $emp->mobile ?? '—' }} | {{ __('employee.joined') }}: {{ $emp->join_date->format('d/m/Y') }} | {{ __('employee.salary') }}: ₹{{ number_format($emp->monthly_salary,0) }}/મહ.</p>
         </div>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <div class="mobile-card-actions">
             @php $pending = $emp->pendingMonths() @endphp
             @if($pending > 0)
             <span class="badge badge-yellow">⏳ {{ $pending }} {{ __('employee.pending_months') }} — ₹{{ number_format($pending * $emp->monthly_salary,0) }}</span>
@@ -112,8 +114,8 @@
     </div>
 </x-form-card>
 @endforeach
+</x-erp-listing>
 
-<div style="margin-top:16px;">{{ $employees->links() }}</div>
 @endsection
 
 @push('scripts')

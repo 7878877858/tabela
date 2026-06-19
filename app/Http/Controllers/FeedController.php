@@ -7,20 +7,28 @@ use App\Models\Feed;
 use App\Models\FeedTransaction;
 use App\Services\FeedInventoryService;
 use App\Services\FeedStockService;
+use App\Support\ListPagination;
+use App\Support\ListingSearch;
 use Illuminate\Http\Request;
 
 class FeedController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $feeds = Feed::withInventoryStats()
-            ->orderBy('name')
-            ->paginate(25);
+        $perPage = ListPagination::resolvePerPage($request);
+        $search = ListingSearch::term($request->get('search'));
+
+        $feedQuery = Feed::withInventoryStats()->orderBy('name');
+        if ($search) {
+            ListingSearch::applyTextColumns($feedQuery, $search, ['name', 'description']);
+        }
+
+        $feeds = $feedQuery->paginate($perPage)->withQueryString();
 
         $allFeeds = Feed::orderBy('name')->get(['id', 'name', 'unit']);
         $stats = FeedInventoryService::dashboardStats();
 
-        return view('feeds.index', compact('feeds', 'allFeeds', 'stats'));
+        return view('feeds.index', compact('feeds', 'allFeeds', 'stats', 'perPage', 'search'));
     }
 
     public function history(Request $request)
@@ -46,10 +54,20 @@ class FeedController extends Controller
             $query->where('direction', $type === 'IN' ? 'in' : 'out');
         }
 
-        $transactions = $query->paginate(50)->withQueryString();
-        $feeds = Feed::orderBy('name')->get(['id', 'name', 'unit']);
+        if ($search = ListingSearch::term($request->get('search'))) {
+            $term = ListingSearch::likeTerm($search);
+            $query->where(function ($q) use ($term) {
+                $q->where('supplier', 'like', $term)
+                    ->orWhere('remarks', 'like', $term)
+                    ->orWhereHas('feed', fn ($f) => $f->where('name', 'like', $term));
+            });
+        }
 
-        return view('feeds.history', compact('transactions', 'feeds'));
+        $transactions = $query->paginate(ListPagination::resolvePerPage($request, 50))->withQueryString();
+        $feeds = Feed::orderBy('name')->get(['id', 'name', 'unit']);
+        $perPage = ListPagination::resolvePerPage($request, 50);
+
+        return view('feeds.history', compact('transactions', 'feeds', 'perPage'));
     }
 
     public function create()
@@ -129,17 +147,23 @@ class FeedController extends Controller
             ->with('success', 'Feed Deleted Successfully');
     }
 
-    public function show(Feed $feed)
+    public function show(Request $request, Feed $feed)
     {
+        $perPage = ListPagination::resolvePerPage($request);
+
         $feed->loadSum(['transactions as total_in' => fn ($q) => $q->where('direction', 'in')], 'quantity')
             ->loadSum(['transactions as total_out' => fn ($q) => $q->where('direction', 'out')], 'quantity')
             ->loadSum(['transactions as stock_value_in' => fn ($q) => $q->where('direction', 'in')], 'total_amount');
 
         $ledger = FeedInventoryService::ledgerForFeed($feed);
 
-        $transactions = $feed->transactions()->with(['buffalo', 'creator', 'dailyReport'])->paginate(25);
+        $transactions = $feed->transactions()->with(['buffalo', 'creator', 'dailyReport'])
+            ->orderByDesc('transaction_date')
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
 
-        return view('feeds.show', compact('feed', 'transactions', 'ledger'));
+        return view('feeds.show', compact('feed', 'transactions', 'ledger', 'perPage'));
     }
 
     public function stockIn(Request $request, Feed $feed)

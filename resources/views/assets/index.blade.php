@@ -1,245 +1,126 @@
 @extends('layouts.app')
-
 @section('title', __('asset.assets_management'))
 
 @section('content')
+@php $currency = \App\Models\Setting::get('currency', '₹'); @endphp
+<link rel="stylesheet" href="{{ asset('static/css/asset-management.css') }}">
+<link rel="stylesheet" href="{{ asset('static/css/daily-report.css') }}">
 
-<div class="page-header">
-    <h2>🚜 {{ __('asset.assets_management') }}</h2>
-</div>
-
-{{-- Add Asset --}}
-<div class="card" style="margin-bottom:20px;">
-    <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;">
-        {{ isset($editAsset) ? '✏️ ' . __('asset.edit_asset') : '➕ ' . __('asset.add_new_asset') }}
-    </h3>
-
-        @if(isset($editAsset))
-        <form method="POST" action="{{ route('assets.update',$editAsset) }}" enctype="multipart/form-data">
-            @method('PUT')
-        @else
-        <form method="POST" action="{{ route('assets.store') }}" enctype="multipart/form-data">
-        @endif
-
-        @csrf
-
-        <div class="grid-3">
-
-            <div class="form-group">
-                <label class="form-label">{{ __('asset.asset_name') }} *</label>
-                <input type="text"
-                    name="name"
-                    class="form-control"
-                    value="{{ old('name',$editAsset->name ?? '') }}"
-                    placeholder="{{ __('asset.asset_name_placeholder') }}"
-                    required>
+<div class="am-page">
+    <div class="am-hero">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+                <h2>🚜 {{ __('asset.assets_management') }}</h2>
+                <p>{{ __('asset.hero_subtitle') }}</p>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">{{ __('asset.category') }}</label>
-                <select name="category" class="form-control">
-                    <option value="Vehicle">🚜 {{ __('asset.vehicle') }}</option>
-                    <option value="Machine">⚙️ {{ __('asset.machine') }}</option>
-                    <option value="Equipment">🛠 {{ __('asset.equipment') }}</option>
-                    <option value="Other">📦 {{ __('asset.other') }}</option>
-                </select>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ route('assets.create') }}" class="btn btn-light btn-sm">➕ {{ __('asset.add_asset') }}</a>
+                <a href="{{ route('reports.assets') }}" class="btn btn-outline-light btn-sm">📊 {{ __('asset.reports') }}</a>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">{{ __('asset.quantity') }}</label>
-                <input type="number"
-                       name="quantity"
-                       value="{{ old('quantity',$editAsset->quantity ?? 1) }}"
-                       min="1"
-                       class="form-control">
-            </div>
-
         </div>
-
-        <div class="grid-3">
-
-            <div class="form-group">
-                <label class="form-label">{{ __('asset.purchase_date') }}</label>
-                <input type="date"
-                    name="purchase_date"
-                    value="{{ old('purchase_date',$editAsset->purchase_date ?? '') }}"
-                    class="form-control">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">{{ __('asset.purchase_cost') }}</label>
-                <input type="number"
-                    name="purchase_cost"
-                    value="{{ old('purchase_cost',$editAsset->purchase_cost ?? '') }}"
-                    placeholder="{{ __('asset.purchase_cost_placeholder') }}"
-                    class="form-control">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">{{ __('asset.current_value') }}</label>
-                <input type="number"
-                    name="current_value"
-                    value="{{ old('current_value',$editAsset->current_value ?? '') }}"
-                    placeholder="{{ __('asset.current_value_placeholder') }}"
-                    class="form-control">
-            </div>
-
-        </div>
-
-        <div class="grid-3">
-
-            <div class="form-group">
-                <label class="form-label">{{ __('asset.condition') }}</label>
-                <select name="condition" class="form-control">
-                    <option value="excellent">{{ __('asset.excellent') }}</option>
-                    <option value="good">{{ __('asset.good') }}</option>
-                    <option value="needs_repair">{{ __('asset.needs_repair') }}</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">{{ __('asset.status') }}</label>
-                <select name="status" class="form-control">
-                    <option value="active">{{ __('asset.active') }}</option>
-                    <option value="sold">{{ __('asset.sold') }}</option>
-                    <option value="scrap">{{ __('asset.scrap') }}</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">{{ __('asset.image') }}</label>
-                <input type="file"
-                       name="image"
-                       class="form-control">
-            </div>
-
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">{{ __('asset.description') }}</label>
-           <textarea name="description"
-            rows="3"
-            class="form-control"
-            placeholder="{{ __('asset.description_placeholder') }}">{{ old('description',$editAsset->description ?? '') }}</textarea>
-        </div>
-
-       <button type="submit" class="btn btn-primary">
-            {{ isset($editAsset) ? '💾 ' . __('asset.update_asset') : '➕ ' . __('asset.add_asset') }}
-        </button>
-
-        @if(isset($editAsset))
-        <a href="{{ route('assets.index') }}" class="btn btn-outline">
-            {{ __('asset.cancel') }}
-        </a>
-@endif
-
-    </form>
-</div>
-
-{{-- Asset List --}}
-<div class="card">
-
-    <h3 style="margin-bottom:15px;">
-        📦 {{ __('asset.asset_list') }}
-    </h3>
-
-    <div class="table-wrap">
-
-        <table>
-
-            <thead>
-            <tr>
-                <th>{{ __('asset.image') }}</th>
-                <th>{{ __('asset.asset') }}</th>
-                <th>{{ __('asset.category') }}</th>
-                <th>{{ __('asset.quantity') }}</th>
-                <th>{{ __('asset.condition') }}</th>
-                <th>{{ __('asset.status') }}</th>
-                <th>{{ __('asset.cost') }}</th>
-                <th>{{ __('asset.action') }}</th>
-            </tr>
-            </thead>
-
-            <tbody>
-
-            @forelse($assets as $asset)
-
-                <tr>
-
-                    <td>
-                    @if($asset->image)
-                        <img src="{{ asset('storage/'.$asset->image) }}"
-                            alt="{{ $asset->name }}"
-                            style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">
-                    @else
-                        {{ __('asset.no_image') }}
-                    @endif
-
-                    </td>
-  
-                    <td>
-                        <strong>{{ $asset->name }}</strong>
-                    </td>
-
-                    <td>{{ $asset->category }}</td>
-
-                    <td>{{ $asset->quantity }}</td>
-
-                    <td>{{ ucfirst($asset->condition) }}</td>
-
-                    <td>
-                        <span class="badge badge-green">
-                            {{ ucfirst($asset->status) }}
-                        </span>
-                    </td>
-
-                    <td>
-                        ₹{{ number_format($asset->purchase_cost,0) }}
-                    </td>
-
-                    <td>
-
-                        <a href="{{ route('assets.edit',$asset) }}"
-                           class="btn btn-outline btn-sm">
-                            ✏️
-                        </a>
-
-                        <form method="POST"
-                              action="{{ route('assets.destroy',$asset) }}"
-                              style="display:inline;"
-                              onsubmit="return confirm('Delete Asset?')">
-
-                            @csrf
-                            @method('DELETE')
-
-                            <button type="submit"
-                                    class="btn btn-danger btn-sm">
-                                🗑
-                            </button>
-
-                        </form>
-
-                    </td>
-
-                </tr>
-
-            @empty
-
-                <tr>
-                    <td colspan="8"
-                        style="text-align:center;padding:30px;color:#999;">
-                        {{ __('asset.no_assets') }}
-                    </td>
-                </tr>
-
-            @endforelse
-
-            </tbody>
-
-        </table>
-
     </div>
 
+    <div class="am-summary-grid">
+        <div class="am-metric">
+            <span class="am-metric__label">🚜 {{ __('asset.total_assets') }}</span>
+            <span class="am-metric__value">{{ $summary['total_assets'] }}</span>
+        </div>
+        <div class="am-metric">
+            <span class="am-metric__label">💰 {{ __('asset.total_asset_value') }}</span>
+            <span class="am-metric__value">{{ $currency }}{{ number_format($summary['total_value'], 0) }}</span>
+        </div>
+        <div class="am-metric">
+            <span class="am-metric__label">🔧 {{ __('asset.month_maintenance') }}</span>
+            <span class="am-metric__value">{{ $currency }}{{ number_format($summary['month_maintenance'], 0) }}</span>
+        </div>
+        <div class="am-metric">
+            <span class="am-metric__label">⚠️ {{ __('asset.upcoming_services') }}</span>
+            <span class="am-metric__value">{{ $summary['upcoming_services'] }}</span>
+        </div>
+    </div>
+
+    <div class="am-card">
+        <h3 class="am-card__title">📦 {{ __('asset.asset_list') }}</h3>
+
+        <x-erp-listing :per-page="25" id="assets-list" :search="false">
+            <x-slot:toolbar>
+                <input type="search" id="assetSearch" class="form-control form-control-sm" placeholder="{{ __('asset.search_placeholder') }}" autocomplete="off">
+                <select id="assetCategoryFilter" class="form-control form-control-sm">
+                    <option value="">{{ __('asset.all_categories') }}</option>
+                    @foreach($categories as $key => $label)
+                    <option value="{{ $key }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <select id="assetStatusFilter" class="form-control form-control-sm">
+                    <option value="">{{ __('asset.all_statuses') }}</option>
+                    @foreach($statuses as $st)
+                    <option value="{{ $st }}">{{ __('asset.' . $st) }}</option>
+                    @endforeach
+                </select>
+            </x-slot:toolbar>
+
+            <div class="am-table-wrap table-responsive mobile-card-table">
+                <table class="am-table" id="assetGridTable">
+                    <thead>
+                        <tr>
+                            <th class="erp-listing__sr-col">{{ __('common.sr_no') }}</th>
+                            <th>Image</th>
+                            <th data-asset-sort="asset_code">Asset Code</th>
+                            <th data-asset-sort="name">Asset Name</th>
+                            <th data-asset-sort="category">Category</th>
+                            <th data-asset-sort="purchase_price">Purchase Price</th>
+                            <th data-asset-sort="current_value">Current Value</th>
+                            <th data-asset-sort="total_maintenance">Maintenance</th>
+                            <th data-asset-sort="next_service_date">Next Service</th>
+                            <th data-asset-sort="status">Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assetGridBody"></tbody>
+                </table>
+            </div>
+        </x-erp-listing>
+    </div>
 </div>
 
+<script type="application/json" id="assetsJson">@json($assetsJson)</script>
 @endsection
+
+@push('scripts')
+@php
+    $assetGridLabels = [
+        'noAssetsFound' => __('asset.no_assets_found'),
+        'deleteConfirm' => __('asset.delete_asset_confirm'),
+        'previous' => __('asset.previous'),
+        'next' => __('asset.next'),
+        'assetsWord' => __('asset.assets_word'),
+        'view' => __('asset.view'),
+        'edit' => __('asset.edit'),
+        'srNoLabel' => __('common.sr_no'),
+    ];
+@endphp
+<script src="{{ asset('static/js/erp-listing-grid.js') }}"></script>
+<script src="{{ asset('static/js/asset-data-grid.js') }}"></script>
+<script>
+(function () {
+    let rows = [];
+    try { rows = JSON.parse(document.getElementById('assetsJson')?.textContent || '[]'); } catch (e) {}
+    AssetDataGrid.initAssetGrid({
+        rows,
+        tbodyId: 'assetGridBody',
+        paginationId: 'erp-listing-footer-assets-list',
+        searchId: 'assetSearch',
+        categoryId: 'assetCategoryFilter',
+        statusId: 'assetStatusFilter',
+        pageSizeId: 'erp_js_per_page_assets-list',
+        totalMetaId: 'erp-listing-total-assets-list',
+        listingId: 'assets-list',
+        currency: @json($currency),
+        csrf: @json(csrf_token()),
+        destroyBase: @json(url('assets')),
+        noImageLabel: @json(__('asset.no_image')),
+        labels: @json($assetGridLabels),
+    });
+})();
+</script>
+@endpush

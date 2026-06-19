@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\DailyReport;
 use App\Models\DailyReportExpense;
-use App\Models\DailyReportIncome;
 use App\Models\Expense;
+use App\Support\DailyExpenseType;
 use App\Models\FeedEntry;
 use App\Models\HealthRecord;
 use App\Models\Income;
@@ -192,18 +192,17 @@ class DailyReportSyncService
         $syncedIds = [];
 
         foreach ($report->expenses as $row) {
-            if (!$row->title) {
-                continue;
-            }
+            $type = $row->expense_type ?: 'other_daily';
+            $label = DailyExpenseType::label($type);
 
             $expense = Expense::updateOrCreate(
                 [
                     'daily_report_id' => $report->id,
-                    'description'     => $row->title,
+                    'description'     => $label,
                 ],
                 [
                     'expense_date' => $report->report_date,
-                    'category'     => 'other',
+                    'category'     => DailyExpenseType::ledgerCategory($type),
                     'amount'       => $row->amount ?? 0,
                     'notes'        => $row->remarks,
                 ]
@@ -219,31 +218,8 @@ class DailyReportSyncService
 
     public function syncIncome(DailyReport $report): void
     {
-        $syncedIds = [];
-
-        foreach ($report->incomes as $row) {
-            if (!$row->title) {
-                continue;
-            }
-
-            $income = Income::updateOrCreate(
-                [
-                    'daily_report_id' => $report->id,
-                    'description'     => $row->title,
-                ],
-                [
-                    'income_date' => $report->report_date,
-                    'category'    => 'other_income',
-                    'amount'      => $row->amount ?? 0,
-                ]
-            );
-
-            $syncedIds[] = $income->id;
-        }
-
-        Income::where('daily_report_id', $report->id)
-            ->whereNotIn('id', $syncedIds ?: [0])
-            ->delete();
+        // Manual incomes (manure, animal sale, other) are saved by DailyReportIncomeService.
+        // Milk income is derived at report time from milk_distributions and dairy_collections.
     }
 
     public function purgeSynced(int $dailyReportId): void

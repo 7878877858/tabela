@@ -13,27 +13,27 @@
 
     <div class="stat-card">
         <div class="label">📋 {{ __('tasks.total_tasks') }}</div>
-        <div class="value">{{ isset($tasks) ? $tasks->count() : 0 }}</div>
+        <div class="value">{{ $taskStats['total'] ?? 0 }}</div>
     </div>
 
     <div class="stat-card">
         <div class="label">⏳ {{ __('tasks.pending') }}</div>
         <div class="value" style="color:#f59e0b;">
-           {{ isset($tasks) ? $tasks->where('status','pending')->count() : 0 }}
+           {{ $taskStats['pending'] ?? 0 }}
         </div>
     </div>
 
     <div class="stat-card">
         <div class="label">🔄 {{ __('tasks.in_progress') }}</div>
         <div class="value" style="color:#3b82f6;">
-            {{ isset($tasks) ? $tasks->where('status','in_progress')->count() : 0 }}
+            {{ $taskStats['in_progress'] ?? 0 }}
         </div>
     </div>
 
     <div class="stat-card">
         <div class="label">✅ {{ __('tasks.completed') }}</div>
         <div class="value" style="color:#16a34a;">
-            {{ isset($tasks) ? $tasks->where('status','completed')->count() : 0 }}
+            {{ $taskStats['completed'] ?? 0 }}
         </div>
     </div>
 
@@ -172,12 +172,15 @@
         📋 {{ __('tasks.active_tasks') }}
     </h3>
 
+    <x-erp-listing :paginator="$tasks" :per-page="$perPage" :search="true" search-placeholder="કાર્ય / કર્મચારી શોધો..." id="tasks">
+
     <div class="table-wrap">
 
         <table>
 
             <thead>
             <tr>
+                <th>{{ __('common.sr_no') }}</th>
                 <th>{{ __('tasks.task') }}</th>
                 <th>{{ __('tasks.employee') }}</th>
                 <th>{{ __('tasks.priority') }}</th>
@@ -193,6 +196,8 @@
             @forelse($tasks as $task)
 
             <tr>
+
+                <td>{{ $tasks->firstItem() + $loop->index }}</td>
 
                 <td>
                     <strong>{{ $task->title }}</strong>
@@ -234,9 +239,9 @@
                     {{ $task->due_date }}
                 </td>
 
-                <td>
+                <td data-label="" class="mobile-card-actions erp-listing__actions">
 
-                    <div style="display:flex;gap:6px;">
+                    <div class="mobile-card-actions__group">
 
                         <a href="{{ route('tasks.edit',$task) }}"
                         class="btn btn-outline btn-sm">
@@ -276,7 +281,7 @@
             @empty
 
             <tr>
-                <td colspan="7"
+                <td colspan="8"
                     style="text-align:center;padding:30px;color:#9ca3af;">
                     {{ __('tasks.no_tasks_found') }}
                 </td>
@@ -289,6 +294,8 @@
         </table>
 
     </div>
+
+    </x-erp-listing>
 
 </div>
 

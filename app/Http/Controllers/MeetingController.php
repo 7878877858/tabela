@@ -5,18 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Models\Employee;
+use App\Support\ListPagination;
+use App\Support\ListingSearch;
 use Illuminate\Http\Request;
 
 class MeetingController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $meetings = Meeting::latest()->paginate(10);
+        $perPage = ListPagination::resolvePerPage($request);
+        $search = ListingSearch::term($request->get('search'));
 
-        return view(
-            'meetings.index',
-            compact('meetings')
-        );
+        $meetingQuery = Meeting::latest();
+        if ($search) {
+            ListingSearch::applyTextColumns($meetingQuery, $search, ['title', 'location', 'status']);
+        }
+
+        $meetings = $meetingQuery->paginate($perPage)->withQueryString();
+
+        $meetingStats = [
+            'total' => Meeting::count(),
+            'today' => Meeting::whereDate('meeting_date', today())->count(),
+            'upcoming' => Meeting::whereDate('meeting_date', '>', today())->count(),
+            'completed' => Meeting::where('status', 'completed')->count(),
+        ];
+
+        return view('meetings.index', compact('meetings', 'meetingStats', 'perPage', 'search'));
     }
 
     public function create()

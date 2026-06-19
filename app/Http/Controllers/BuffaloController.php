@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Buffalo;
 use App\Services\AnimalTagService;
+use App\Services\AnimalTransactionService;
 use App\Services\CalfService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,8 @@ use Illuminate\Support\Facades\DB;
 class BuffaloController extends Controller
 {
     public function __construct(
-        protected CalfService $calfService
+        protected CalfService $calfService,
+        protected AnimalTransactionService $animalTransactions
     ) {
     }
 
@@ -32,6 +34,7 @@ class BuffaloController extends Controller
                 'type_label' => $b->animal_type_label,
                 'status' => $b->status,
                 'status_label' => $b->status_label,
+                'status_badge_class' => $b->status_badge_class,
                 'lactation_label' => $b->lactation_label,
                 'milk_entries_count' => (int) $b->milk_entries_count,
                 'month_milk' => (float) $b->totalMilkThisMonth(),
@@ -88,6 +91,7 @@ class BuffaloController extends Controller
             $validated['tag_number'] = AnimalTagService::generate($validated['animal_type']);
             $parent = Buffalo::create($validated);
             $this->calfService->syncFromParent($parent);
+            $this->animalTransactions->syncPurchaseFromAnimal($parent->fresh());
 
             return $parent->fresh(['birthCalf']);
         });

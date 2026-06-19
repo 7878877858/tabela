@@ -43,10 +43,12 @@
 </x-form-card>
 
 <x-form-card title="Stock Movements" icon="📋" :flush="true">
+    <x-erp-listing :paginator="$transactions" :per-page="$perPage" :search="true" search-placeholder="ફીડ / સપ્લાયર શોધો..." id="feed-history">
     <x-responsive-table>
         <table class="ds-table">
             <thead>
                 <tr>
+                    <th>{{ __('common.sr_no') }}</th>
                     <th>Date</th>
                     <th>Feed</th>
                     <th>Type</th>
@@ -60,6 +62,7 @@
             <tbody>
                 @forelse($transactions as $txn)
                 <tr>
+                    <td>{{ $transactions->firstItem() + $loop->index }}</td>
                     <td>{{ $txn->transaction_date->format('d-m-Y') }}</td>
                     <td><strong>{{ $txn->feed?->name }}</strong> <small class="text-muted">{{ $txn->feed?->unit }}</small></td>
                     <td>
@@ -77,11 +80,11 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="8" class="text-center" style="padding:2rem;color:#94a3b8;">No transactions found.</td></tr>
+                <tr><td colspan="9" class="text-center" style="padding:2rem;color:#94a3b8;">No transactions found.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </x-responsive-table>
-    <div style="padding:12px 16px;">{{ $transactions->links() }}</div>
+    </x-erp-listing>
 </x-form-card>
 @endsection

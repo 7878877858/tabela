@@ -2,7 +2,6 @@
     $milkAnimals = ($milkAnimals ?? collect())->sortBy('tag_number');
     $milkRecords = $milkRecords ?? collect();
     $oldGrid = old('milk_grid', []);
-    $milkAutosaveUrl = isset($report) ? route('daily-reports.autosave-milk', $report->id) : null;
     $milkAnimalsJson = $milkAnimals->map(function ($buffalo) use ($milkRecords, $oldGrid) {
         $record = $milkRecords->get($buffalo->id);
         $rowOld = $oldGrid[$buffalo->id] ?? [];
@@ -38,25 +37,21 @@
         <input type="search" id="milkAnimalSearch" class="form-control form-control-sm" placeholder="ટેગ / નામ શોધો..." autocomplete="off">
     </div>
     <span class="dr-grid-toolbar__meta text-muted" id="milkGridCounts">{{ $milkAnimals->count() }} પશુ</span>
-    @if($milkAutosaveUrl)
-    <div class="form-check form-switch ms-auto" style="font-size:13px;">
-        <input class="form-check-input" type="checkbox" id="milkAutosaveToggle" checked>
-        <label class="form-check-label" for="milkAutosaveToggle">સર્વર ઓટો-સેવ</label>
-    </div>
-    @endif
 </div>
 
 <div class="table-responsive milk-grid-wrap">
     <table class="table table-bordered table-hover milk-grid-table milk-table" id="milkGridTable">
         <colgroup>
-            <col style="width:15%">
-            <col style="width:25%">
-            <col style="width:20%">
-            <col style="width:20%">
-            <col style="width:20%">
+            <col style="width:6%">
+            <col style="width:14%">
+            <col style="width:22%">
+            <col style="width:18%">
+            <col style="width:18%">
+            <col style="width:18%">
         </colgroup>
         <thead>
             <tr>
+                <th class="dr-grid-sr-col">ક્રમ</th>
                 <th>ટેગ નં.</th>
                 <th>પશુ નામ</th>
                 <th>🌅 સવાર (L)</th>
@@ -87,9 +82,5 @@
     <div><strong>સવાર:</strong> <span class="val" id="milkStickyMorning">0.00</span> L</div>
     <div><strong>સાંજ:</strong> <span class="val" id="milkStickyEvening">0.00</span> L</div>
     <div><strong>કુલ:</strong> <span class="val" id="milkStickyTotal">0.00</span> L</div>
-    <span class="milk-autosave-status local" id="milkAutosaveStatus" aria-live="polite">સ્થાનિક ડ્રાફ્ટ સક્રિય</span>
+    <span class="milk-autosave-status local" id="milkAutosaveStatus" aria-live="polite">🟢 ઓફલાઇન ડ્રાફ્ટ સક્રિય</span>
 </div>
-
-@if($milkAutosaveUrl)
-<meta id="milkAutosaveMeta" data-url="{{ $milkAutosaveUrl }}" data-csrf="{{ csrf_token() }}">
-@endif

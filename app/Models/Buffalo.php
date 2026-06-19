@@ -2,6 +2,7 @@
 // app/Models/Buffalo.php
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,6 +33,10 @@ class Buffalo extends Model
         'calf_tag_number',
         'calf_gender',
         'calf_weight',
+        'sold_date',
+        'sale_price',
+        'buyer_name',
+        'sold_reason',
     ];
 
     protected $casts = [
@@ -43,6 +48,8 @@ class Buffalo extends Model
         'expected_delivery_date' => 'date',
         'birth_date' => 'date',
         'sold_date' => 'date',
+        'purchase_price' => 'decimal:2',
+        'sale_price' => 'decimal:2',
     ];
 
     public function milkEntries(): HasMany
@@ -93,12 +100,45 @@ class Buffalo extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'active' => __('buffalo.active'),
-            'dry'    => __('buffalo.dry'),
-            'sold'   => __('buffalo.sold'),
-            'dead'   => __('buffalo.dead'),
+            'active' => '🟢 ' . __('buffalo.active'),
+            'sold'   => '🔴 ' . __('buffalo.sold'),
+            'dead'   => '⚫ ' . __('buffalo.dead'),
             default  => $this->status,
         };
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match ($this->status) {
+            'active' => 'badge-green',
+            'sold'   => 'badge-red',
+            'dead'   => 'badge-gray',
+            default  => 'badge-gray',
+        };
+    }
+
+    public function getSoldPriceAttribute(): ?float
+    {
+        return $this->sale_price !== null ? (float) $this->sale_price : null;
+    }
+
+    public function setSoldPriceAttribute($value): void
+    {
+        $this->attributes['sale_price'] = $value;
+    }
+
+    public function getProfitLossAttribute(): ?float
+    {
+        if ($this->sale_price === null || $this->purchase_price === null) {
+            return null;
+        }
+
+        return round((float) $this->sale_price - (float) $this->purchase_price, 2);
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 'active');
     }
 
     public function getLactationLabelAttribute(): string
@@ -204,8 +244,30 @@ class Buffalo extends Model
 
     public function getDisplayLabelAttribute(): string
     {
-        $name = $this->name ? '-' . $this->name : '';
+        $name = $this->name ? ' - ' . $this->name : '';
 
         return $this->tag_number . $name . ' (' . $this->animal_type_label . ')';
+    }
+
+    /**
+     * Mother animal label for calf birth tables: tag only when name is missing.
+     */
+    public function getMotherDisplayLabelAttribute(): string
+    {
+        if ($this->name) {
+            return $this->tag_number . ' - ' . $this->name . ' (' . $this->animal_type_label . ')';
+        }
+
+        return $this->tag_number;
+    }
+
+    /**
+     * Calf tag for birth tables — linked calf record preferred.
+     */
+    public function getCalfBirthTagAttribute(): string
+    {
+        return $this->birthCalf?->tag_number
+            ?? $this->calf_tag_number
+            ?? '—';
     }
 }

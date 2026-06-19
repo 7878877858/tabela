@@ -1,49 +1,38 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Models\{Expense, Buffalo};
+use App\Services\FarmFinancialService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
 {
+    public function __construct(
+        protected FarmFinancialService $financial
+    ) {
+    }
+
     public function index(Request $request)
     {
-        $month = $request->get('month', now()->month);
-        $year  = $request->get('year', now()->year);
+        $month = (int) $request->get('month', now()->month);
+        $year = (int) $request->get('year', now()->year);
+        $from = Carbon::create($year, $month, 1)->startOfMonth();
+        $to = $from->copy()->endOfMonth();
 
-        $expenses = Expense::with('buffalo')
-            ->whereYear('expense_date', $year)
-            ->whereMonth('expense_date', $month)
-            ->orderByDesc('expense_date')
-            ->paginate(25);
+        $summary = $this->financial->expenseSummaryForPeriod($from, $to);
+        $dashboard = $this->financial->dashboardToday();
 
-        $total = Expense::whereYear('expense_date', $year)
-            ->whereMonth('expense_date', $month)
-            ->sum('amount');
-
-        $byCategory = Expense::whereYear('expense_date', $year)
-            ->whereMonth('expense_date', $month)
-            ->selectRaw('category, SUM(amount) as total')
-            ->groupBy('category')->get();
-
-        $buffaloes = Buffalo::where('status','active')->orderBy('tag_number')->get();
-
-        return view('kharch.index', compact('expenses','total','byCategory','buffaloes','month','year'));
+        return view('expenses.index', compact('summary', 'dashboard', 'month', 'year'));
     }
 
     public function store(Request $request)
     {
-        return back()->with('error', 'ખર્ચ માત્ર દૈનિક અહેવાલમાંથી દાખલ કરો (Feed stock-in અલગ રહેશે).');
+        return back()->with('error', __('farm.daily_expense_note'));
     }
 
-    public function destroy(Expense $expense)
+    public function destroy()
     {
-        if ($expense->daily_report_id) {
-            return back()->with('error', 'આ ખર્ચ દૈનિક અહેવાલમાંથી ડિલીટ કરો.');
-        }
-
-        $expense->delete();
-
-        return back()->with('success', 'ખર્ચ ડિલીટ થયો.');
+        return back()->with('error', __('farm.daily_expense_note'));
     }
 }

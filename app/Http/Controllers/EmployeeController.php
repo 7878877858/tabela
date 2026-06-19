@@ -4,16 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\SalaryPayment;
+use App\Support\ListPagination;
+use App\Support\ListingSearch;
 use Illuminate\Http\Request;
 
 
 class EmployeeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $employees = Employee::orderBy('name')->paginate(20);
+        $perPage = ListPagination::resolvePerPage($request);
+        $search = ListingSearch::term($request->get('search'));
 
-        return view('employees.index', compact('employees'));
+        $employeeQuery = Employee::orderBy('name');
+        if ($search) {
+            ListingSearch::applyTextColumns($employeeQuery, $search, ['name', 'mobile', 'employee_type']);
+        }
+
+        $employees = $employeeQuery->paginate($perPage)->withQueryString();
+
+        return view('employees.index', compact('employees', 'perPage', 'search'));
     }
 
     public function store(Request $request)

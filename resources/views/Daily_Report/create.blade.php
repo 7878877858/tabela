@@ -3,10 +3,24 @@
 
 @section('content')
 @php
-    $drCssVer = @filemtime(public_path('assets/css/daily-report.css')) ?: '1';
-    $drJsVer = @filemtime(public_path('assets/js/daily-report-grids.js')) ?: '1';
+    $drCssVer = @filemtime(public_path('static/css/daily-report.css')) ?: '1';
+    $drJsVer = @filemtime(public_path('static/js/daily-report-grids.js')) ?: '1';
+    $animalCssVer = @filemtime(public_path('static/css/animal-select.css')) ?: '1';
+    $animalJsVer = @filemtime(public_path('static/js/animal-select.js')) ?: '1';
+    $drWizardVer = @filemtime(public_path('static/js/daily-report-wizard.js')) ?: '1';
+    $drEventsVer = @filemtime(public_path('static/js/daily-report-events.js')) ?: '1';
+    $drIncomeVer = @filemtime(public_path('static/js/daily-report-income.js')) ?: '1';
+    $drMilkFlowVer = @filemtime(public_path('static/js/daily-report-milk-flow.js')) ?: '1';
+    $milkCustomerJsVer = @filemtime(public_path('static/js/milk-customer-select.js')) ?: '1';
+    $drPremiumCssVer = @filemtime(public_path('static/css/daily-report-premium.css')) ?: '1';
+    $drUiJsVer = @filemtime(public_path('static/js/daily-report-ui.js')) ?: '1';
+    $reportDateDisplay = old('report_date', $report->report_date ?? date('Y-m-d'));
 @endphp
-<link rel="stylesheet" href="{{ asset('assets/css/daily-report.css') }}?v={{ $drCssVer }}">
+@include('components.milk-customer-select-assets')
+<script type="application/json" id="drMilkAnimalTypes">{!! json_encode(($milkAnimals ?? collect())->mapWithKeys(fn ($a) => [$a->id => \App\Models\Buffalo::normalizeAnimalType($a->animal_type)])) !!}</script>
+<link rel="stylesheet" href="{{ asset('static/css/daily-report.css') }}?v={{ $drCssVer }}">
+<link rel="stylesheet" href="{{ asset('static/css/daily-report-premium.css') }}?v={{ $drPremiumCssVer }}">
+<x-animal-select-assets />
 <style>
     /* Page-specific: Daily Report mobile table cards — global styles in design-system.css */
     .icon {
@@ -175,6 +189,7 @@
 </style>
 <form id="dailyReportForm"
     class="daily-report-page"
+    enctype="multipart/form-data"
     data-is-edit="{{ isset($report) ? '1' : '0' }}"
     data-report-id="{{ $report->id ?? '' }}"
     action="{{ isset($report)
@@ -195,35 +210,48 @@
     <div class="container-fluid">
 
 
-        <div class="card border-0 shadow-lg dr-page-hero">
-            <div class="card-body bg-primary text-white">
-
-                <div class="d-flex justify-content-between align-items-center">
-
+        <div class="card border-0 dr-page-hero dr-page-hero--premium">
+            <div class="dr-page-hero__glass">
+                <div class="dr-page-hero__main">
+                    <div class="dr-page-hero__icon" aria-hidden="true">📋</div>
                     <div>
-                        <h3 class="mb-1">
-                            📋 દૈનિક સ્ટાફ કાર્ય અહેવાલ
-                        </h3>
+                        <h1 class="dr-page-hero__title">દૈનિક સ્ટાફ કાર્ય અહેવાલ</h1>
+                        <p class="dr-page-hero__subtitle">Premium Dairy ERP · ઝડપી દૈનિક ડેટા એન્ટ્રી</p>
                     </div>
+                </div>
+                <div class="dr-page-hero__badges">
+                    <span class="dr-hero-badge dr-hero-badge--date" id="drHeaderDate">{{ $reportDateDisplay }}</span>
+                    <span class="dr-hero-badge dr-hero-badge--save" id="drHeaderAutosave">🟢 ડ્રાફ્ટ સક્રિય</span>
+                    <span class="dr-hero-badge dr-hero-badge--progress">પ્રગતિ <strong id="drWizardProgressPct">10</strong>%</span>
                 </div>
             </div>
         </div>
 
-        <nav class="dr-step-nav" aria-label="Daily Report steps">
-            <a href="#basicInfoSection" class="dr-step-nav__item"><span class="dr-step-nav__num">1</span> મૂળભૂત</a>
-            <a href="#milkSection" class="dr-step-nav__item"><span class="dr-step-nav__num">2</span> દૂધ</a>
-            <a href="#feedSection" class="dr-step-nav__item"><span class="dr-step-nav__num">3</span> ચારો</a>
-            <a href="#healthSection" class="dr-step-nav__item"><span class="dr-step-nav__num">4</span> આરોગ્ય</a>
-            <a href="#vaccinationSection" class="dr-step-nav__item"><span class="dr-step-nav__num">5</span> રસી</a>
-            <a href="#pregnancySection" class="dr-step-nav__item"><span class="dr-step-nav__num">6</span> ગર્ભ</a>
-            <a href="#expenseSection" class="dr-step-nav__item"><span class="dr-step-nav__num">7</span> ખર્ચ</a>
-            <a href="#incomeSection" class="dr-step-nav__item"><span class="dr-step-nav__num">8</span> આવક</a>
-            <a href="#notesSection" class="dr-step-nav__item"><span class="dr-step-nav__num">9</span> નોંધ</a>
-            <a href="#dr-step-save" class="dr-step-nav__item dr-step-nav__item--save"><span class="dr-step-nav__num">10</span> સેવ</a>
-        </nav>
+        <div class="dr-wizard-shell" id="drWizardShell">
+            <div class="dr-wizard-progress" aria-hidden="true">
+                <div class="dr-wizard-progress__track">
+                    <div class="dr-wizard-progress__fill" id="drWizardProgressFill" style="width: 10%"></div>
+                </div>
+                <span class="dr-wizard-progress__label"><span id="drWizardProgressLabel">1</span> / 10</span>
+            </div>
+            <nav class="dr-step-nav dr-step-nav--premium" aria-label="Daily Report steps">
+            <a href="#" class="dr-step-nav__item is-active" data-step="1"><span class="dr-step-nav__num">1</span><span class="dr-step-nav__label">મૂળભૂત</span></a>
+            <a href="#" class="dr-step-nav__item" data-step="2"><span class="dr-step-nav__num">2</span><span class="dr-step-nav__label">દૂધ</span></a>
+            <a href="#" class="dr-step-nav__item" data-step="3"><span class="dr-step-nav__num">3</span><span class="dr-step-nav__label">ચારો</span></a>
+            <a href="#" class="dr-step-nav__item" data-step="4"><span class="dr-step-nav__num">4</span><span class="dr-step-nav__label">Health</span></a>
+            <a href="#" class="dr-step-nav__item" data-step="5"><span class="dr-step-nav__num">5</span><span class="dr-step-nav__label">Vaccination</span></a>
+            <a href="#" class="dr-step-nav__item" data-step="6"><span class="dr-step-nav__num">6</span><span class="dr-step-nav__label">Pregnancy</span></a>
+            <a href="#" class="dr-step-nav__item" data-step="7"><span class="dr-step-nav__num">7</span><span class="dr-step-nav__label">ખર્ચ</span></a>
+            <a href="#" class="dr-step-nav__item" data-step="8"><span class="dr-step-nav__num">8</span><span class="dr-step-nav__label">વિતરણ</span></a>
+            <a href="#" class="dr-step-nav__item" data-step="9"><span class="dr-step-nav__num">9</span><span class="dr-step-nav__label">ડેરી</span></a>
+            <a href="#" class="dr-step-nav__item" data-step="10"><span class="dr-step-nav__num">10</span><span class="dr-step-nav__label">આવક</span></a>
+            </nav>
+        </div>
+
+        <!-- @include('Daily_Report.partials._quick_actions') -->
 
         <!-- Summary -->
-        <div class="card shadow-sm border-0 dr-section-card">
+        <div class="card shadow-sm border-0 dr-section-card" id="drSummaryCard">
 
             <div class="card-header p-0 dr-section-header">
                 <div class="dr-collapsible-header-inner">
@@ -332,7 +360,7 @@
 
         <!-- Staff Attendance -->
         <br style="display:none;">
-        <div class="card shadow-sm border-0 dr-section-card" id="staffSection">
+        <div class="card shadow-sm border-0 dr-section-card dr-step-section" id="staffSection" data-dr-step="1">
 
             <div class="card-header p-0 dr-section-header">
                 <div class="dr-collapsible-header-inner">
@@ -480,480 +508,15 @@
             </div>
         </div>
 
-        <!-- Health Section -->
-        <br style="display:none;">
-        <div class="card shadow-sm border-0 dr-section-card dr-collapsible-section is-collapsed dr-step-section" id="healthSection" data-dr-step="4">
-            <div class="card-header dr-collapsible-header p-0" role="button" tabindex="0" aria-expanded="false">
-                <div class="dr-collapsible-header-inner">
-                    <span class="dr-collapsible-title">🏥 આરોગ્ય અને સારવાર</span>
-                    <i class="fa-solid fa-chevron-down dr-section-toggle" id="healthToggleIcon" aria-hidden="true"></i>
-                </div>
-            </div>
-            <div class="card-body dr-collapsible-content dr-section-content p-0" id="healthContent">
-                <div class="dr-section-toolbar">
-                    <button type="button" class="btn btn-sm btn-outline-success" id="addHealthRow">
-                        <i class="fa-solid fa-circle-plus"></i> પંક્તિ ઉમેરો
-                    </button>
-                </div>
-                <div class="dr-section-table-area">
-                <table class="table dr-section-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>પશુ</th>
-                            <th>સમસ્યા</th>
-                            <th>સારવાર</th>
-                            <th>દવા ખર્ચ</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="healthBody">
+        @include('Daily_Report.partials._health_section')
 
-                            @if(isset($report) && $report->health->count())
+        @include('Daily_Report.partials._vaccination_section')
 
-                            @foreach($report->health as $index => $health)
-
-                            <tr class="dr-dynamic-row">
-
-                                <td data-label="પશુ">
-                                    <select name="health_buffalo_id[]" class="form-control">
-
-                                        <option value="">પશુ પસંદ કરો</option>
-
-                                        @foreach($buffaloes as $buffalo)
-
-                                        <option value="{{ $buffalo->id }}" data-animal-type="{{ $buffalo->animal_type ?? 'buffalo' }}"
-                                            {{ $buffalo->id == $health->buffalo_id ? 'selected' : '' }}>
-
-                                            {{ $buffalo->display_label }}
-
-                                        </option>
-
-                                        @endforeach
-
-                                    </select>
-                                </td>
-
-                                <td data-label="સમસ્યા">
-                                    <input type="text"
-                                        name="health_issue[]"
-                                        class="form-control"
-                                        value="{{ $health->health_issue ?? '' }}"
-                                        placeholder="Enter Health Issue">
-                                </td>
-
-                                <td data-label="સારવાર">
-                                    <input type="text"
-                                        name="treatment[]"
-                                        class="form-control"
-                                        value="{{ $health->treatment ?? '' }}"
-                                        placeholder="Enter Treatment Details">
-                                </td>
-
-                                <td data-label="દવા ખર્ચ">
-                                    <input type="number"
-                                        step="0.01"
-                                        name="medicine_cost[]"
-                                        class="form-control"
-                                        value="{{ $health->medicine_cost ?? '' }}"
-                                        placeholder="Enter Medicine Cost">
-                                </td>
-
-                                <td class="dr-row-remove" data-label="">
-                                    <button type="button" class="dr-remove-btn remove-health-row" title="Remove row" aria-label="Remove row"{{ $index == 0 ? ' style="display:none;"' : '' }}>
-                                        <i class="fa-solid fa-circle-minus text-danger"></i>
-                                    </button>
-                                </td>
-
-                            </tr>
-
-                            @endforeach
-
-                            @else
-
-                            {{-- Create Page Default Row --}}
-
-                            <tr class="dr-dynamic-row">
-
-                                <td data-label="પશુ">
-                                    <select name="health_buffalo_id[]" class="form-control">
-
-                                        <option value="">પશુ પસંદ કરો</option>
-
-                                        @foreach($buffaloes as $buffalo)
-
-                                        <option value="{{ $buffalo->id }}" data-animal-type="{{ $buffalo->animal_type ?? 'buffalo' }}">
-                                            {{ $buffalo->display_label }}
-                                        </option>
-
-                                        @endforeach
-
-                                    </select>
-                                </td>
-
-                                <td data-label="સમસ્યા">
-                                    <input type="text"
-                                        name="health_issue[]"
-                                        class="form-control"
-                                        placeholder="Enter Health Issue">
-                                </td>
-
-                                <td data-label="સારવાર">
-                                    <input type="text"
-                                        name="treatment[]"
-                                        class="form-control"
-                                        placeholder="Enter Treatment Details">
-                                </td>
-
-                                <td data-label="દવા ખર્ચ">
-                                    <input type="number"
-                                        step="0.01"
-                                        name="medicine_cost[]"
-                                        class="form-control"
-                                        placeholder="Enter Medicine Cost">
-                                </td>
-
-                                <td class="dr-row-remove" data-label="">
-                                    <button type="button" class="dr-remove-btn remove-health-row" title="Remove row" aria-label="Remove row" style="display:none;">
-                                        <i class="fa-solid fa-circle-minus text-danger"></i>
-                                    </button>
-                                </td>
-
-                            </tr>
-
-                            @endif
-
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <!-- Vaccination Section -->
-        <br style="display:none;">
-        <div class="card shadow-sm border-0 dr-section-card dr-collapsible-section is-collapsed dr-step-section" id="vaccinationSection" data-dr-step="5">
-            <div class="card-header dr-collapsible-header p-0" role="button" tabindex="0" aria-expanded="false">
-                <div class="dr-collapsible-header-inner">
-                    <span class="dr-collapsible-title">💉 રસીકરણ</span>
-                    <i class="fa-solid fa-chevron-down dr-section-toggle" id="vaccinationToggleIcon" aria-hidden="true"></i>
-                </div>
-            </div>
-            <div class="card-body dr-collapsible-content dr-section-content p-0" id="vaccinationContent">
-                <div class="dr-section-toolbar">
-                    <button type="button" class="btn btn-sm btn-outline-success" id="addVaccinationRow">
-                        <i class="fa-solid fa-circle-plus"></i> પંક્તિ ઉમેરો
-                    </button>
-                </div>
-                <div class="dr-section-table-area">
-                <table class="table dr-section-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>પશુ</th>
-                            <th>રસી</th>
-                            <th>તારીખ</th>
-                            <th>નોંધ</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="vaccinationBody">
-
-                            @if(isset($report) && $report->vaccinations->count())
-
-                            @foreach($report->vaccinations as $index => $vaccination)
-
-                            <tr class="dr-dynamic-row">
-
-                                <td data-label="પશુ">
-                                    <select name="vaccination_buffalo_id[]" class="form-control">
-
-                                        <option value="">પશુ પસંદ કરો</option>
-
-                                        @foreach($buffaloes as $buffalo)
-
-                                        <option value="{{ $buffalo->id }}" data-animal-type="{{ $buffalo->animal_type ?? 'buffalo' }}"
-                                            {{ $buffalo->id == $vaccination->buffalo_id ? 'selected' : '' }}>
-
-                                            {{ $buffalo->display_label }}
-
-                                        </option>
-
-                                        @endforeach
-
-                                    </select>
-                                </td>
-
-                                <td data-label="રસી">
-                                    <input type="text"
-                                        name="vaccine_name[]"
-                                        class="form-control"
-                                        value="{{ $vaccination->vaccine_name ?? '' }}"
-                                        placeholder="Enter Vaccine Name">
-                                </td>
-
-                                <td data-label="તારીખ">
-                                    <input type="date"
-                                        name="vaccination_date[]"
-                                        class="form-control"
-                                        value="{{ $vaccination->vaccination_date ?? '' }}">
-                                </td>
-
-                                <td data-label="નોંધ">
-                                    <input type="text"
-                                        name="vaccination_remarks[]"
-                                        class="form-control"
-                                        value="{{ $vaccination->remarks ?? '' }}"
-                                        placeholder="Enter Vaccination Remarks">
-                                </td>
-
-                                <td class="dr-row-remove" data-label="">
-                                    <button type="button" class="dr-remove-btn remove-vaccination-row" title="Remove row" aria-label="Remove row"{{ $index == 0 ? ' style="display:none;"' : '' }}>
-                                        <i class="fa-solid fa-circle-minus text-danger"></i>
-                                    </button>
-                                </td>
-
-                            </tr>
-
-                            @endforeach
-
-                            @else
-
-                            {{-- Create Page Default Row --}}
-
-                            <tr class="dr-dynamic-row">
-
-                                <td data-label="પશુ">
-                                    <select name="vaccination_buffalo_id[]" class="form-control">
-
-                                        <option value="">પશુ પસંદ કરો</option>
-
-                                        @foreach($buffaloes as $buffalo)
-
-                                        <option value="{{ $buffalo->id }}" data-animal-type="{{ $buffalo->animal_type ?? 'buffalo' }}">
-                                            {{ $buffalo->display_label }}
-                                        </option>
-
-                                        @endforeach
-
-                                    </select>
-                                </td>
-
-                                <td data-label="રસી">
-                                    <input type="text"
-                                        name="vaccine_name[]"
-                                        class="form-control"
-                                        placeholder="Enter Vaccine Name">
-                                </td>
-
-                                <td data-label="તારીખ">
-                                    <input type="date"
-                                        name="vaccination_date[]"
-                                        class="form-control">
-                                </td>
-
-                                <td data-label="નોંધ">
-                                    <input type="text"
-                                        name="vaccination_remarks[]"
-                                        class="form-control"
-                                        placeholder="Enter Vaccination Remarks">
-                                </td>
-
-                                <td class="dr-row-remove" data-label="">
-                                    <button type="button" class="dr-remove-btn remove-vaccination-row" title="Remove row" aria-label="Remove row" style="display:none;">
-                                        <i class="fa-solid fa-circle-minus text-danger"></i>
-                                    </button>
-                                </td>
-
-                            </tr>
-
-                            @endif
-
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pregnancy -->
-        <br style="display:none;">
-        <div class="card shadow-sm border-0 dr-section-card dr-collapsible-section is-collapsed dr-step-section" id="pregnancySection" data-dr-step="6">
-            <div class="card-header dr-collapsible-header p-0" role="button" tabindex="0" aria-expanded="false">
-                <div class="dr-collapsible-header-inner">
-                    <span class="dr-collapsible-title">🤰 પ્રજનન અને પ્રેગ્નન્સી</span>
-                    <i class="fa-solid fa-chevron-down dr-section-toggle" id="pregnancyToggleIcon" aria-hidden="true"></i>
-                </div>
-            </div>
-            <div class="card-body dr-collapsible-content dr-section-content p-0" id="pregnancyContent">
-                <div class="dr-section-toolbar">
-                    <button type="button" class="btn btn-sm btn-outline-success" id="addPregnancyRow">
-                        <i class="fa-solid fa-circle-plus"></i> પંક્તિ ઉમેરો
-                    </button>
-                </div>
-                <div class="dr-section-table-area">
-                <div class="table-responsive">
-                    <table class="table dr-section-table pregnancy-table mb-0" id="pregnancyTable">
-                                <thead>
-                                    <tr>
-                                        <th data-label="પશુ નં">પશુ નં</th>
-                                        <th data-label="પશુ નામ">પશુ નામ</th>
-                                        <th data-label="છેલ્લી હીટ">છેલ્લી હીટ તારીખ</th>
-                                        <th data-label="AI તારીખ">AI તારીખ</th>
-                                        <th data-label="પ્રેગ્નન્ટ તારીખ">પ્રેગ્નન્ટ તારીખ</th>
-                                        <th data-label="Expected Delivery">અપેક્ષિત પ્રસૂતિ</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="pregnancyBody">
-
-                                    @if(isset($report) && $report->pregnancy->count())
-
-                                    @foreach($report->pregnancy as $index => $pregnancy)
-
-                                    @php
-                                    $selectedBuffalo = $buffaloes->firstWhere('id', $pregnancy->buffalo_id);
-                                    @endphp
-
-                                    <tr class="dr-dynamic-row">
-
-                                        <td data-label="પશુ નં">
-                                            <select name="pregnancy_buffalo_id[]"
-                                                class="form-control buffalo-select">
-
-                                                <option value="">પશુ પસંદ કરો</option>
-
-                                                @foreach($buffaloes as $buffalo)
-
-                                                <option value="{{ $buffalo->id }}" data-animal-type="{{ $buffalo->animal_type ?? 'buffalo' }}"
-                                                    data-name="{{ $buffalo->name }}"
-                                                    {{ $buffalo->id == $pregnancy->buffalo_id ? 'selected' : '' }}>
-
-                                                    {{ $buffalo->display_label }}
-
-                                                </option>
-
-                                                @endforeach
-
-                                            </select>
-                                        </td>
-
-                                        <td data-label="પશુ નામ">
-                                            <input type="text"
-                                                class="form-control buffalo-name"
-                                                value="{{ $selectedBuffalo->name ?? '' }}"
-                                                readonly>
-                                        </td>
-
-                                        <td data-label="છેલ્લી હીટ">
-                                            <input type="date"
-                                                name="last_heat_date[]"
-                                                class="form-control"
-                                                value="{{ $pregnancy->buffalo->heat_date ?? '' }}">
-                                        </td>
-
-                                        <td data-label="AI તારીખ">
-                                            <input type="date"
-                                                name="ai_date[]"
-                                                class="form-control"
-                                                value="{{ $pregnancy->buffalo->ai_date ?? '' }}">
-                                        </td>
-
-                                        <td data-label="પ્રેગ્નન્ટ તારીખ">
-                                            <input type="date"
-                                                name="pregnant_date[]"
-                                                class="form-control"
-                                                value="{{ $pregnancy->buffalo->pregnancy_check_date ?? '' }}">
-                                        </td>
-
-                                        <td data-label="અપેક્ષિત પ્રસૂતિ">
-                                            <input type="date"
-                                                name="expected_delivery[]"
-                                                class="form-control"
-                                                value="{{ $pregnancy->buffalo->expected_delivery_date ?? '' }}">
-                                        </td>
-
-                                        <td class="dr-row-remove" data-label="">
-                                            <button type="button" class="dr-remove-btn remove-pregnancy-row" title="Remove row" aria-label="Remove row"{{ $index == 0 ? ' style="display:none;"' : '' }}>
-                                                <i class="fa-solid fa-circle-minus text-danger"></i>
-                                            </button>
-                                        </td>
-
-                                    </tr>
-
-                                    @endforeach
-
-                                    @else
-
-                                    {{-- Create Page Default Row --}}
-
-                                    <tr class="dr-dynamic-row">
-
-                                        <td data-label="પશુ નં">
-                                            <select name="pregnancy_buffalo_id[]"
-                                                class="form-control buffalo-select">
-
-                                                <option value="">પશુ પસંદ કરો</option>
-
-                                                @foreach($buffaloes as $buffalo)
-
-                                                <option value="{{ $buffalo->id }}" data-animal-type="{{ $buffalo->animal_type ?? 'buffalo' }}"
-                                                    data-name="{{ $buffalo->name }}">
-
-                                                    {{ $buffalo->display_label }}
-
-                                                </option>
-
-                                                @endforeach
-
-                                            </select>
-                                        </td>
-
-                                        <td data-label="પશુ નામ">
-                                            <input type="text"
-                                                class="form-control buffalo-name"
-                                                readonly>
-                                        </td>
-
-                                        <td data-label="છેલ્લી હીટ">
-                                            <input type="date"
-                                                name="last_heat_date[]"
-                                                class="form-control">
-                                        </td>
-
-                                        <td data-label="AI તારીખ">
-                                            <input type="date"
-                                                name="ai_date[]"
-                                                class="form-control">
-                                        </td>
-
-                                        <td data-label="પ્રેગ્નન્ટ તારીખ">
-                                            <input type="date"
-                                                name="pregnant_date[]"
-                                                class="form-control">
-                                        </td>
-
-                                        <td data-label="અપેક્ષિત પ્રસૂતિ">
-                                            <input type="date"
-                                                name="expected_delivery[]"
-                                                class="form-control">
-                                        </td>
-
-                                        <td class="dr-row-remove" data-label="">
-                                            <button type="button" class="dr-remove-btn remove-pregnancy-row" title="Remove row" aria-label="Remove row" style="display:none;">
-                                                <i class="fa-solid fa-circle-minus text-danger"></i>
-                                            </button>
-                                        </td>
-
-                                    </tr>
-
-                                    @endif
-
-                                </tbody>
-                            </table>
-                </div>
-                </div>
-            </div>
-        </div>
+        @include('Daily_Report.partials._pregnancy_section')
 
         <!-- Cleaning -->
         <br style="display:none;">
-        <div class="card shadow-sm border-0 dr-section-card dr-collapsible-section is-collapsed" id="cleaningSection">
+        <div class="card shadow-sm border-0 dr-section-card dr-collapsible-section is-collapsed dr-wizard-optional" id="cleaningSection">
 
             <div class="card-header dr-collapsible-header p-0 dr-section-header" role="button" tabindex="0" aria-expanded="false">
                 <div class="dr-collapsible-header-inner">
@@ -1106,6 +669,7 @@
             <div class="card-header dr-collapsible-header p-0 dr-section-header" role="button" tabindex="0" aria-expanded="false">
                 <div class="dr-collapsible-header-inner">
                     <span class="dr-collapsible-title">💰 ખર્ચ</span>
+                    <span class="dr-kpi-pill dr-kpi-pill--expense" id="expenseSectionTotal" aria-live="polite">₹0.00</span>
                     <div class="dr-section-header-actions">
                         <button type="button" class="dr-section-add-btn" id="addExpenseRow" title="પંક્તિ ઉમેરો" aria-label="પંક્તિ ઉમેરો">
                             <i class="fa-solid fa-circle-plus" aria-hidden="true"></i>
@@ -1119,7 +683,7 @@
                 <table class="table dr-section-table mb-0">
                     <thead>
                         <tr>
-                            <th>ખર્ચનું નામ</th>
+                            <th>ખર્ચ પ્રકાર</th>
                             <th>રકમ</th>
                             <th>નોંધ</th>
                             <th></th>
@@ -1129,27 +693,29 @@
                     @if(isset($report) && $report->expenses->count())
                     @foreach($report->expenses as $index => $expense)
                     <tr class="dr-dynamic-row">
-                        <td data-label="ખર્ચનું નામ">
-                            <input type="text"
-                                name="expense_title[]"
-                                class="form-control"
-                                value="{{ $expense->title }}"
-                                placeholder="Enter Expense Title">
+                        <td data-label="ખર્ચ પ્રકાર">
+                            <select name="expense_type[]" class="form-control" required>
+                                <option value="">— પ્રકાર પસંદ કરો —</option>
+                                @foreach(($dailyExpenseTypes ?? []) as $value => $label)
+                                <option value="{{ $value }}" @selected(($expense->expense_type ?? 'other_daily') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </td>
                         <td data-label="રકમ">
                             <input type="number"
                                 step="0.01"
+                                min="0"
                                 name="expense_amount[]"
                                 class="form-control"
                                 value="{{ $expense->amount }}"
-                                placeholder="Enter Expense Amount">
+                                placeholder="રકમ">
                         </td>
                         <td data-label="નોંધ">
                             <input type="text"
                                 name="expense_remarks[]"
                                 class="form-control"
                                 value="{{ $expense->remarks }}"
-                                placeholder="Enter Remarks">
+                                placeholder="નોંધ">
                         </td>
                         <td class="dr-row-remove" data-label="">
                             <button type="button" class="dr-remove-btn remove-expense-row" title="Remove row" aria-label="Remove row"{{ $index == 0 ? ' style="display:none;"' : '' }}>
@@ -1160,24 +726,27 @@
                     @endforeach
                     @else
                     <tr class="dr-dynamic-row">
-                        <td data-label="ખર્ચનું નામ">
-                            <input type="text"
-                                name="expense_title[]"
-                                class="form-control"
-                                placeholder="Enter Expense Title">
+                        <td data-label="ખર્ચ પ્રકાર">
+                            <select name="expense_type[]" class="form-control">
+                                <option value="">— પ્રકાર પસંદ કરો —</option>
+                                @foreach(($dailyExpenseTypes ?? []) as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </td>
                         <td data-label="રકમ">
                             <input type="number"
                                 step="0.01"
+                                min="0"
                                 name="expense_amount[]"
                                 class="form-control"
-                                placeholder="Enter Expense Amount">
+                                placeholder="રકમ">
                         </td>
                         <td data-label="નોંધ">
                             <input type="text"
                                 name="expense_remarks[]"
                                 class="form-control"
-                                placeholder="Enter Remarks">
+                                placeholder="નોંધ">
                         </td>
                         <td class="dr-row-remove" data-label="">
                             <button type="button" class="dr-remove-btn remove-expense-row" title="Remove row" aria-label="Remove row" style="display:none;">
@@ -1192,101 +761,13 @@
             </div>
         </div>
 
-        <!-- Income Section -->
-        <br style="display:none;">
-        <div class="card shadow-sm border-0 dr-section-card dr-collapsible-section is-collapsed dr-step-section" id="incomeSection" data-dr-step="8">
-            <div class="card-header dr-collapsible-header p-0 dr-section-header" role="button" tabindex="0" aria-expanded="false">
-                <div class="dr-collapsible-header-inner">
-                    <span class="dr-collapsible-title">💵 આવક</span>
-                    <div class="dr-section-header-actions">
-                        <button type="button" class="dr-section-add-btn" id="addIncomeRow" title="પંક્તિ ઉમેરો" aria-label="પંક્તિ ઉમેરો">
-                            <i class="fa-solid fa-circle-plus" aria-hidden="true"></i>
-                        </button>
-                        <i class="fa-solid fa-chevron-down dr-section-toggle" id="incomeToggleIcon" aria-hidden="true"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body dr-collapsible-content dr-section-content p-0" id="incomeContent">
-                <div class="dr-section-table-area">
-                <table class="table dr-section-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>આવકનું નામ</th>
-                            <th>રકમ</th>
-                            <th>નોંધ</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="incomeBody">
-                    @if(isset($report) && $report->incomes->count())
-                    @foreach($report->incomes as $index => $income)
-                    <tr class="dr-dynamic-row">
-                        <td data-label="આવકનું નામ">
-                            <input type="text"
-                                name="income_title[]"
-                                class="form-control"
-                                value="{{ $income->title }}"
-                                placeholder="Enter Income Title">
-                        </td>
-                        <td data-label="રકમ">
-                            <input type="number"
-                                step="0.01"
-                                name="income_amount[]"
-                                class="form-control"
-                                value="{{ $income->amount }}"
-                                placeholder="Enter Income Amount">
-                        </td>
-                        <td data-label="નોંધ">
-                            <input type="text"
-                                name="income_remarks[]"
-                                class="form-control"
-                                value="{{ $income->remarks }}"
-                                placeholder="Enter Remarks">
-                        </td>
-                        <td class="dr-row-remove" data-label="">
-                            <button type="button" class="dr-remove-btn remove-income-row" title="Remove row" aria-label="Remove row"{{ $index == 0 ? ' style="display:none;"' : '' }}>
-                                <i class="fa-solid fa-circle-minus text-danger"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    @endforeach
-                    @else
-                    <tr class="dr-dynamic-row">
-                        <td data-label="આવકનું નામ">
-                            <input type="text"
-                                name="income_title[]"
-                                class="form-control"
-                                placeholder="Enter Income Title">
-                        </td>
-                        <td data-label="રકમ">
-                            <input type="number"
-                                step="0.01"
-                                name="income_amount[]"
-                                class="form-control"
-                                placeholder="Enter Income Amount">
-                        </td>
-                        <td data-label="નોંધ">
-                            <input type="text"
-                                name="income_remarks[]"
-                                class="form-control"
-                                placeholder="Enter Remarks">
-                        </td>
-                        <td class="dr-row-remove" data-label="">
-                            <button type="button" class="dr-remove-btn remove-income-row" title="Remove row" aria-label="Remove row" style="display:none;">
-                                <i class="fa-solid fa-circle-minus text-danger"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    @endif
-                    </tbody>
-                </table>
-                </div>
-            </div>
-        </div>
+        @include('Daily_Report.partials._milk_distribution_section')
+        @include('Daily_Report.partials._dairy_collection_section')
+        @include('Daily_Report.partials._income_section')
 
-        <!-- Notes -->
+        <!-- Notes (step 10) -->
         <br style="display:none;">
-        <div class="card shadow-sm border-0 dr-section-card dr-notes-card dr-step-section" id="notesSection" data-dr-step="9">
+        <div class="card shadow-sm border-0 dr-section-card dr-notes-card dr-step-section" id="notesSection" data-dr-step="10">
             <div class="card-header p-0 dr-section-header">
                 <div class="dr-collapsible-header-inner">
                     <span class="dr-collapsible-title">📝 ખાસ નોંધ</span>
@@ -1302,7 +783,7 @@
 
             </div>
 
-            <div class="card-footer dr-save-footer" id="dr-step-save">
+            <div class="card-footer dr-save-footer dr-wizard-optional" id="dr-step-save">
                 <button type="submit" class="btn btn-success dr-save-btn">
                     💾 સેવ કરો
                 </button>
@@ -1310,101 +791,28 @@
 
         </div>
 
+        <div class="dr-wizard-footer" id="drWizardFooter">
+            <button type="button" class="btn btn-outline-secondary" id="drWizardPrev" disabled>← પાછા</button>
+            <button type="button" class="btn btn-primary" id="drWizardNext">આગળ →</button>
+            <button type="submit" class="btn btn-success" id="drWizardSave" hidden>💾 સેવ કરો</button>
+        </div>
 
+        <x-animal-select-assets />
         <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-        <script>
-            document.addEventListener('change', function(e) {
-                if (e.target.classList.contains('buffalo-select')) {
-                    let row = e.target.closest('tr');
-                    let selected = e.target.options[e.target.selectedIndex];
-                    let buffaloName = selected.getAttribute('data-name') || '';
-                    row.querySelector('.buffalo-name').value = buffaloName;
-                }
-            });
-        </script>
-
-        <script src="{{ asset('assets/js/daily-report-grids.js') }}?v={{ $drJsVer }}"></script>
+        <script src="{{ asset('static/js/daily-report-grids.js') }}?v={{ $drJsVer }}"></script>
+        <script src="{{ asset('static/js/daily-report-events.js') }}?v={{ $drEventsVer }}"></script>
+        <script src="{{ asset('static/js/milk-customer-select.js') }}?v={{ $milkCustomerJsVer }}"></script>
+        <script src="{{ asset('static/js/daily-report-wizard.js') }}?v={{ $drWizardVer }}"></script>
+        <script src="{{ asset('static/js/daily-report-ui.js') }}?v={{ $drUiJsVer }}"></script>
+        <script src="{{ asset('static/js/daily-report-milk-flow.js') }}?v={{ $drMilkFlowVer }}"></script>
+        <script src="{{ asset('static/js/daily-report-income.js') }}?v={{ $drIncomeVer }}"></script>
         <script>
         (function() {
-            function collectMilkGridForServer() {
-                window.DailyReportMilkPager?.sync();
-                const grid = {};
-                document.getElementById('milkGridHiddenStore')?.querySelectorAll('[data-buffalo-id][data-period]').forEach((input) => {
-                    const id = input.dataset.buffaloId;
-                    const period = input.dataset.period;
-                    if (!grid[id]) grid[id] = {};
-                    grid[id][period] = input.value;
-                });
-                return grid;
-            }
-
-            let autosaveTimer;
-            function scheduleServerMilkAutosave() {
-                const toggle = document.getElementById('milkAutosaveToggle');
-                const meta = document.getElementById('milkAutosaveMeta');
-                const status = document.getElementById('milkAutosaveStatus');
-                if (!meta || (toggle && !toggle.checked)) return;
-
-                clearTimeout(autosaveTimer);
-                if (status) { status.textContent = 'સર્વર સેવ...'; status.className = 'milk-autosave-status saving'; }
-
-                autosaveTimer = setTimeout(async () => {
-                    try {
-                        const res = await fetch(meta.dataset.url, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': meta.dataset.csrf,
-                            },
-                            body: JSON.stringify({
-                                milk_grid: collectMilkGridForServer(),
-                                report_date: document.querySelector('[name="report_date"]')?.value || null,
-                            }),
-                        });
-                        if (!res.ok) throw new Error('fail');
-                        if (status) { status.textContent = 'સર્વર સેવ ✓'; status.className = 'milk-autosave-status saved'; }
-                    } catch (e) {
-                        if (status) { status.textContent = 'સર્વર સેવ ભૂલ'; status.className = 'milk-autosave-status error'; }
-                    }
-                }, 1500);
-            }
-
-            document.addEventListener('input', function(e) {
-                if (e.target.classList.contains('milk-qty')) {
-                    window.DailyReportDraft?.scheduleSave();
-                    scheduleServerMilkAutosave();
-                }
-                if (e.target.classList.contains('feed-qty')) {
-                    window.DailyReportDraft?.scheduleSave();
-                }
-            });
-
             document.getElementById('dailyReportForm')?.addEventListener('submit', function() {
                 window.DailyReportMilkPager?.sync();
                 window.DailyReportFeedPager?.sync();
+                window.DailyReportDraft?.flushDraftSync();
             });
-
-            const stepNav = document.querySelector('.dr-step-nav');
-            const stepSections = document.querySelectorAll('.dr-step-section[data-dr-step]');
-            if (stepNav && stepSections.length) {
-                const stepLinks = stepNav.querySelectorAll('.dr-step-nav__item[href^="#"]');
-                const onScroll = () => {
-                    let current = null;
-                    const offset = 140;
-                    stepSections.forEach((section) => {
-                        if (section.getBoundingClientRect().top <= offset) {
-                            current = section;
-                        }
-                    });
-                    stepLinks.forEach((link) => {
-                        const id = (link.getAttribute('href') || '').slice(1);
-                        link.classList.toggle('is-active', current && current.id === id);
-                    });
-                };
-                window.addEventListener('scroll', onScroll, { passive: true });
-                onScroll();
-            }
         })();
         </script>
 
@@ -1455,148 +863,7 @@
             toggleStaffMinus();
         </script>
 
-        <!-- HealthBody -->
-
-        <script>
-            function toggleHealthMinus() {
-
-                let rows = document.querySelectorAll('#healthBody tr');
-
-                rows.forEach((row) => {
-
-                    let minus = row.querySelector('.remove-health-row');
-
-                    if (minus) {
-                        minus.style.display = rows.length === 1 ? 'none' : 'inline-flex';
-                    }
-
-                });
-            }
-
-            document.getElementById('addHealthRow').addEventListener('click', function(e) {
-                e.stopPropagation();
-
-                let firstRow = document.querySelector('#healthBody tr');
-                let newRow = firstRow.cloneNode(true);
-
-                newRow.querySelectorAll('input').forEach(input => input.value = '');
-                newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-
-                document.getElementById('healthBody').appendChild(newRow);
-
-                toggleHealthMinus();
-            });
-
-            document.addEventListener('click', function(e) {
-
-                const removeBtn = e.target.closest('.remove-health-row');
-
-                if (removeBtn) {
-
-                    removeBtn.closest('tr').remove();
-
-                    toggleHealthMinus();
-                }
-            });
-
-            toggleHealthMinus();
-        </script>
-
-        <!--VaccinationBody -->
-
-        <script>
-            function toggleVaccinationMinus() {
-
-                let rows = document.querySelectorAll('#vaccinationBody tr');
-
-                rows.forEach((row) => {
-
-                    let minus = row.querySelector('.remove-vaccination-row');
-
-                    if (minus) {
-                        minus.style.display = rows.length === 1 ? 'none' : 'inline-flex';
-                    }
-
-                });
-            }
-
-            document.getElementById('addVaccinationRow').addEventListener('click', function(e) {
-                e.stopPropagation();
-
-                let firstRow = document.querySelector('#vaccinationBody tr');
-                let newRow = firstRow.cloneNode(true);
-
-                newRow.querySelectorAll('input').forEach(input => input.value = '');
-                newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-
-                document.getElementById('vaccinationBody').appendChild(newRow);
-
-                toggleVaccinationMinus();
-            });
-
-            document.addEventListener('click', function(e) {
-
-                const removeBtn = e.target.closest('.remove-vaccination-row');
-
-                if (removeBtn) {
-
-                    removeBtn.closest('tr').remove();
-
-                    toggleVaccinationMinus();
-                }
-            });
-
-            toggleVaccinationMinus();
-        </script>
-
-        <!-- pregnancyBody -->
-
-        <script>
-            function togglePregnancyMinus() {
-
-                let rows = document.querySelectorAll('#pregnancyBody tr');
-
-                rows.forEach((row) => {
-
-                    let minus = row.querySelector('.remove-pregnancy-row');
-
-                    if (minus) {
-                        minus.style.display = rows.length === 1 ? 'none' : 'inline-flex';
-                    }
-
-                });
-            }
-
-            document.getElementById('addPregnancyRow').addEventListener('click', function(e) {
-                e.stopPropagation();
-
-                let firstRow = document.querySelector('#pregnancyBody tr');
-                let newRow = firstRow.cloneNode(true);
-
-                newRow.querySelectorAll('input').forEach(input => input.value = '');
-                newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-
-                document.getElementById('pregnancyBody').appendChild(newRow);
-
-                togglePregnancyMinus();
-            });
-
-            document.addEventListener('click', function(e) {
-
-                const removeBtn = e.target.closest('.remove-pregnancy-row');
-
-                if (removeBtn) {
-
-                    removeBtn.closest('tr').remove();
-
-                    togglePregnancyMinus();
-                }
-            });
-
-            togglePregnancyMinus();
-        </script>
-
-        <!-- Collapsible sections (Health / Vaccination / Pregnancy) -->
+        <!-- Collapsible sections -->
         <script>
         (function () {
             function isMobile() {
@@ -1655,15 +922,13 @@
             }
 
             const sections = [
-                ['healthSection', 'healthContent', 'healthToggleIcon'],
-                ['vaccinationSection', 'vaccinationContent', 'vaccinationToggleIcon'],
-                ['pregnancySection', 'pregnancyContent', 'pregnancyToggleIcon'],
                 ['cleaningSection', 'cleaningContent', 'cleaningToggleIcon'],
                 ['expenseSection', 'expenseContent', 'expenseToggleIcon', function (e) {
                     return e.target.closest('.dr-section-add-btn');
                 }],
-                ['incomeSection', 'incomeContent', 'incomeToggleIcon', function (e) {
-                    return e.target.closest('.dr-section-add-btn');
+                ['incomeSection', 'incomeContent', null, function (e) {
+                    return e.target.closest('.dr-section-add-btn') || e.target.closest('#addManureRow')
+                        || e.target.closest('#addAnimalSaleRow') || e.target.closest('#addOtherIncomeRow');
                 }],
             ];
 
@@ -1723,53 +988,6 @@
             });
 
             toggleExpenseMinus();
-        </script>
-
-        <!-- IncomeBody -->
-
-        <script>
-            function toggleIncomeMinus() {
-
-                let rows = document.querySelectorAll('#incomeBody tr.dr-dynamic-row');
-
-                rows.forEach((row) => {
-
-                    let minus = row.querySelector('.remove-income-row');
-
-                    if (minus) {
-                        minus.style.display = rows.length === 1 ? 'none' : 'inline-flex';
-                    }
-
-                });
-            }
-
-            document.getElementById('addIncomeRow').addEventListener('click', function(e) {
-                e.stopPropagation();
-
-                let firstRow = document.querySelector('#incomeBody tr.dr-dynamic-row');
-                let newRow = firstRow.cloneNode(true);
-
-                newRow.querySelectorAll('input').forEach(input => input.value = '');
-                newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-
-                document.getElementById('incomeBody').appendChild(newRow);
-
-                toggleIncomeMinus();
-            });
-
-            document.addEventListener('click', function(e) {
-
-                const removeBtn = e.target.closest('.remove-income-row');
-
-                if (removeBtn) {
-
-                    removeBtn.closest('tr').remove();
-
-                    toggleIncomeMinus();
-                }
-            });
-
-            toggleIncomeMinus();
         </script>
 
         <!-- feed stock validation: show on problem, auto-clear when user fixes -->

@@ -16,11 +16,19 @@
         <h3 style="font-size:14px; font-weight:600; margin-bottom:12px; color:#6b7280;">📋 {{ __('buffalo.details') }}</h3>
         <table style="font-size:14px;">
             <tr><td style="color:#6b7280; padding:5px 0; width:130px;">પ્રકાર</td><td><span class="badge badge-gray">{{ $buffalo->animal_type_label }}</span></td></tr>
-            <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.status') }}</td><td><span class="badge {{ $buffalo->status==='active' ? 'badge-green' : 'badge-red' }}">{{ $buffalo->status_label }}</span></td></tr>
+            <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.status') }}</td><td><span class="badge {{ $buffalo->status_badge_class }}">{{ $buffalo->status_label }}</span></td></tr>
             <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.milk') }}</td><td><span class="badge badge-blue">{{ $buffalo->lactation_label }}</span></td></tr>
             <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.dob') }}</td><td>{{ $buffalo->dob?->format('d/m/Y') ?? '—' }}</td></tr>
             <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.purchase_date') }}</td><td>{{ $buffalo->purchase_date?->format('d/m/Y') ?? '—' }}</td></tr>
             <tr><td style="color:#6b7280; padding:5px 0;">{{ __('buffalo.purchase_price') }}</td><td>{{ $buffalo->purchase_price ? '₹'.number_format($buffalo->purchase_price,0) : '—' }}</td></tr>
+            @if($buffalo->status === 'sold')
+            <tr><td style="color:#6b7280; padding:5px 0;">{{ __('income.sale_price') }}</td><td>{{ $buffalo->sale_price ? '₹'.number_format($buffalo->sale_price,0) : '—' }}</td></tr>
+            <tr><td style="color:#6b7280; padding:5px 0;">{{ __('income.buyer_name') }}</td><td>{{ $buffalo->buyer_name ?? '—' }}</td></tr>
+            <tr><td style="color:#6b7280; padding:5px 0;">{{ __('income.sale_date') }}</td><td>{{ $buffalo->sold_date?->format('d/m/Y') ?? '—' }}</td></tr>
+            @if($buffalo->profit_loss !== null)
+            <tr><td style="color:#6b7280; padding:5px 0;">{{ __('income.profit_loss') }}</td><td class="{{ $buffalo->profit_loss >= 0 ? 'text-success' : 'text-danger' }}"><strong>₹{{ number_format($buffalo->profit_loss, 0) }}</strong></td></tr>
+            @endif
+            @endif
             @if($buffalo->mother)
             <tr><td style="color:#6b7280; padding:5px 0;">માતા</td><td><a href="{{ route('buffalo.show', $buffalo->mother) }}">{{ $buffalo->mother->tag_number }}</a></td></tr>
             @endif

@@ -1,0 +1,54 @@
+/* Milk Customers listing — action column layout (UI only) */
+.milk-customers-page .table-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.milk-customers-page .table-actions form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.milk-customers-page .table-actions .btn,
+.milk-customers-page .table-actions button {
+    flex-shrink: 0;
+}
+
+.milk-customers-page .erp-listing__table-wrap .ds-table td.action-column {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+    .milk-customers-page td[data-label="Action"],
+    .milk-customers-page .action-column {
+        text-align: right;
+    }
+
+    .milk-customers-page .mobile-card-table table tbody tr td.action-column {
+        justify-content: flex-end !important;
+        margin-top: 8px;
+        padding-top: 8px !important;
+        border-top: 1px solid var(--ds-border, #e2e8f0);
+    }
+
+    .milk-customers-page .mobile-card-table table tbody tr td.action-column::before {
+        content: none !important;
+        display: none !important;
+    }
+
+    .milk-customers-page .table-actions {
+        justify-content: flex-end;
+        width: 100%;
+        gap: 8px;
+        flex-wrap: nowrap !important;
+    }
+
+    .milk-customers-page .table-actions .btn,
+    .milk-customers-page .table-actions button {
+        margin: 0;
+    }
+}

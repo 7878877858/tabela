@@ -106,10 +106,12 @@
 </x-form-card>
 
 <x-form-card title="All Transactions" icon="📋" :flush="true">
+    <x-erp-listing :paginator="$transactions" :per-page="$perPage" :search="true" search-placeholder="સપ્લાયર / રિમાર્ક શોધો..." id="feed-show">
     <x-responsive-table>
         <table class="ds-table">
             <thead>
                 <tr>
+                    <th>{{ __('common.sr_no') }}</th>
                     <th>Date</th>
                     <th>Type</th>
                     <th>IN/OUT</th>
@@ -122,6 +124,7 @@
             <tbody>
                 @forelse($transactions as $txn)
                 <tr>
+                    <td>{{ $transactions->firstItem() + $loop->index }}</td>
                     <td>{{ $txn->transaction_date->format('d/m/Y') }}</td>
                     <td>{{ $txn->type_label }}</td>
                     <td><span class="badge {{ $txn->direction === 'in' ? 'badge-green' : 'badge-red' }}">{{ $txn->ledger_type }}</span></td>
@@ -131,12 +134,12 @@
                     <td>{{ $txn->remarks ?? '—' }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="text-center text-muted py-3">No transactions.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-3">No transactions.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </x-responsive-table>
-    <div style="padding:12px 16px;">{{ $transactions->links() }}</div>
+    </x-erp-listing>
 </x-form-card>
 
 @push('scripts')

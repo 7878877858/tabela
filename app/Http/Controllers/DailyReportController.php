@@ -4,12 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DailyReport;
+use App\Support\ListPagination;
+use App\Support\ListingSearch;
 use App\Models\Buffalo;
 use App\Models\MilkEntry;
 use App\Models\Employee;
 use App\Services\FeedStockService;
 use App\Services\MilkStockService;
 use App\Services\DailyReportSyncService;
+use App\Services\AnimalAlertService;
+use App\Services\CalfBirthReportService;
+use App\Support\DailyExpenseType;
+use App\Services\DailyReportMilkFlowService;
+use App\Services\DailyReportIncomeService;
+use App\Models\MilkCustomer;
+use App\Models\MilkDistribution;
+use App\Models\DairyCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Models\Feed;
@@ -20,7 +30,6 @@ use App\Models\DailyReportPregnancy;
 use App\Models\DailyReportHealth;
 use App\Models\DailyReportVaccination;
 use App\Models\DailyReportExpense;
-use App\Models\DailyReportIncome;
 use App\Models\Expense;
 use App\Models\Income;
 
@@ -28,20 +37,31 @@ use App\Models\Income;
 class DailyReportController extends Controller
 {
     public function __construct(
-        protected DailyReportSyncService $syncService
+        protected DailyReportSyncService $syncService,
+        protected CalfBirthReportService $calfBirthReportService,
+        protected DailyReportMilkFlowService $milkFlowService,
+        protected DailyReportIncomeService $incomeService
     ) {
     }
 
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $reports = DailyReport::orderByDesc('report_date')->paginate(20);
+        $perPage = ListPagination::resolvePerPage($request);
+        $search = ListingSearch::term($request->get('search'));
+
+        $reportQuery = DailyReport::orderByDesc('report_date');
+        if ($search) {
+            ListingSearch::applyTextColumns($reportQuery, $search, ['report_number', 'reporter', 'shift']);
+        }
+
+        $reports = $reportQuery->paginate($perPage)->withQueryString();
         $totalAnimals = Buffalo::totalHeadCount(true);
         $totalStaff = Employee::where('status', 'active')->count();
 
-        return view('Daily_Report.index', compact('reports', 'totalAnimals', 'totalStaff'));
+        return view('Daily_Report.index', compact('reports', 'totalAnimals', 'totalStaff', 'perPage', 'search'));
     }
 
     protected function heatAnimalsCount(): int
@@ -71,6 +91,25 @@ class DailyReportController extends Controller
     protected function animalTypeCountsForReport(): array
     {
         return Buffalo::activeCountsByAnimalType(true);
+    }
+
+    protected function milkFlowViewData(?DailyReport $report = null): array
+    {
+        $milkCustomers = MilkCustomer::active()->orderBy('name')->get();
+        $milkDistributions = $report
+            ? MilkDistribution::where('daily_report_id', $report->id)->with('customer')->get()
+            : collect();
+        $dairyCollection = $report
+            ? DairyCollection::where('daily_report_id', $report->id)->first()
+            : null;
+        $dairySlipNumber = $dairyCollection?->slip_number
+            ?? app(DailyReportMilkFlowService::class)->nextDairySlipNumber();
+
+        return array_merge(
+            compact('milkCustomers', 'milkDistributions', 'dairyCollection', 'dairySlipNumber'),
+            ['dailyExpenseTypes' => DailyExpenseType::options()],
+            $this->incomeService->viewData($report)
+        );
     }
 
     /**
@@ -288,7 +327,7 @@ class DailyReportController extends Controller
     public function create()
     {
         $employees = Employee::all();
-        $buffaloes = Buffalo::all();
+        $buffaloes = Buffalo::where('status', 'active')->orderBy('tag_number')->get();
         $feeds = $this->feedsForDailyReport();
         $totalAnimals = Buffalo::totalHeadCount(true);
         $animalTypeCounts = $this->animalTypeCountsForReport();
@@ -332,10 +371,15 @@ class DailyReportController extends Controller
         $feedRecords = collect();
         $milkAnimals = $this->milkAnimalsForGrid();
         $milkRecords = collect();
+        $alertService = app(AnimalAlertService::class);
+        $vaccinationDueAnimals = $alertService->vaccinationDueAnimals();
+        $pregnancyCheckDueAnimals = $alertService->pregnancyCheckDueAnimals();
+        $treatmentFollowUpAnimals = $alertService->treatmentFollowUpAnimals();
 
         return view(
             'Daily_Report.create',
-            compact(
+            array_merge(
+                compact(
                 'employees',
                 'committeeMembers',
                 'buffaloes',
@@ -351,7 +395,12 @@ class DailyReportController extends Controller
                 'dryAnimals',
                 'totalMilk',
                 'reportNumber',
-                'heatAnimals'
+                'heatAnimals',
+                'vaccinationDueAnimals',
+                'pregnancyCheckDueAnimals',
+                'treatmentFollowUpAnimals'
+            ),
+                $this->milkFlowViewData()
             )
         );
     }
@@ -433,83 +482,19 @@ class DailyReportController extends Controller
     */
         $this->saveFeedGrid($report, $request, $feedsById, $feedConsumption);
 
-        if ($request->health_buffalo_id) {
-            foreach ($request->health_buffalo_id as $key => $buffaloId) {
-                if (!$buffaloId) {
-                    continue;
-                }
+        $this->saveHealthRecords($report, $request);
+        $this->saveVaccinationRecords($report, $request);
+        $this->savePregnancyActivities($report, $request);
 
-                DailyReportHealth::create([
-                    'daily_report_id' => $report->id,
-                    'buffalo_id'      => $buffaloId,
-                    'health_issue'    => $request->health_issue[$key] ?? '',
-                    'treatment'       => $request->treatment[$key] ?? '',
-                    'medicine_cost'   => $request->medicine_cost[$key] ?? 0,
-                ]);
-            }
-        }
+        $this->saveDailyExpenses($report, $request);
 
-        if ($request->pregnancy_buffalo_id) {
-            foreach ($request->pregnancy_buffalo_id as $key => $buffaloId) {
-                if (!$buffaloId) {
-                    continue;
-                }
+        $this->milkFlowService->saveForReport(
+            $report,
+            $request,
+            $this->milkAnimalsForGrid()
+        );
 
-                DailyReportPregnancy::create([
-                    'daily_report_id' => $report->id,
-                    'buffalo_id'      => $buffaloId,
-                    'checkup_date'    => $request->pregnant_date[$key] ?? null,
-                    'status'          => 'pregnant',
-                    'remarks'         => null,
-                ]);
-            }
-        }
-
-        if ($request->vaccination_buffalo_id) {
-            foreach ($request->vaccination_buffalo_id as $key => $buffaloId) {
-                if (!$buffaloId) {
-                    continue;
-                }
-
-                DailyReportVaccination::create([
-                    'daily_report_id'  => $report->id,
-                    'buffalo_id'       => $buffaloId,
-                    'vaccine_name'     => $request->vaccine_name[$key] ?? '',
-                    'vaccination_date' => $request->vaccination_date[$key] ?? null,
-                    'remarks'          => $request->vaccination_remarks[$key] ?? '',
-                ]);
-            }
-        }
-
-        if ($request->expense_title) {
-            foreach ($request->expense_title as $key => $title) {
-                if (!$title) {
-                    continue;
-                }
-
-                DailyReportExpense::create([
-                    'daily_report_id' => $report->id,
-                    'title'           => $title,
-                    'amount'          => $request->expense_amount[$key] ?? 0,
-                    'remarks'         => $request->expense_remarks[$key] ?? '',
-                ]);
-            }
-        }
-
-        if ($request->income_title) {
-            foreach ($request->income_title as $key => $title) {
-                if (!$title) {
-                    continue;
-                }
-
-                DailyReportIncome::create([
-                    'daily_report_id' => $report->id,
-                    'title'           => $title,
-                    'amount'          => $request->income_amount[$key] ?? 0,
-                    'remarks'         => $request->income_remarks[$key] ?? '',
-                ]);
-            }
-        }
+        $this->incomeService->saveForReport($report, $request);
 
         $this->syncService->syncAll($report->fresh());
 
@@ -518,7 +503,8 @@ class DailyReportController extends Controller
 
         return redirect()
             ->route('daily-reports.index')
-            ->with('success', 'Report Created Successfully');
+            ->with('success', '✅ Report Saved Successfully · Draft Cleared')
+            ->with('clear_daily_report_draft', true);
     }
 
     /**
@@ -537,7 +523,7 @@ class DailyReportController extends Controller
             'vaccinations.buffalo'
         ]);
 
-        $births = Buffalo::whereNotNull('birth_date')->get();
+        $births = $this->calfBirthReportService->forDailyReport($dailyReport->report_date);
         $totalAnimals = Buffalo::totalHeadCount(true);
         $animalTypeCounts = $this->animalTypeCountsForReport();
 
@@ -596,7 +582,7 @@ class DailyReportController extends Controller
             'vaccinations.buffalo'
         ])->findOrFail($id);
         $employees = Employee::all();
-        $buffaloes = Buffalo::all();
+        $buffaloes = Buffalo::where('status', 'active')->orderBy('tag_number')->get();
         $feeds = $this->feedsForDailyReport();
 
         $totalAnimals = Buffalo::totalHeadCount(true);
@@ -631,10 +617,15 @@ class DailyReportController extends Controller
         $feedRecords = $report->feed->keyBy('buffalo_id');
         $milkAnimals = $this->milkAnimalsForGrid();
         $milkRecords = $report->milk->keyBy('buffalo_id');
+        $alertService = app(AnimalAlertService::class);
+        $vaccinationDueAnimals = $alertService->vaccinationDueAnimals();
+        $pregnancyCheckDueAnimals = $alertService->pregnancyCheckDueAnimals();
+        $treatmentFollowUpAnimals = $alertService->treatmentFollowUpAnimals();
 
         return view(
             'Daily_Report.edit',
-            compact(
+            array_merge(
+                compact(
                 'report',
                 'employees',
                 'committeeMembers',
@@ -650,7 +641,12 @@ class DailyReportController extends Controller
                 'pregnantAnimals',
                 'dryAnimals',
                 'totalMilk',
-                'heatAnimals'
+                'heatAnimals',
+                'vaccinationDueAnimals',
+                'pregnancyCheckDueAnimals',
+                'treatmentFollowUpAnimals'
+            ),
+                $this->milkFlowViewData($report)
             )
         );
     }
@@ -664,6 +660,7 @@ class DailyReportController extends Controller
         $oldDate = $report->report_date;
 
         FeedStockService::restoreDailyReport($report->id);
+        $this->incomeService->purgeForReport($report);
         $this->syncService->purgeSynced($report->id);
 
         $feedData = $this->validateFeedConsumption($request);
@@ -703,7 +700,6 @@ class DailyReportController extends Controller
         DailyReportHealth::where('daily_report_id', $report->id)->delete();
         DailyReportVaccination::where('daily_report_id', $report->id)->delete();
         DailyReportExpense::where('daily_report_id', $report->id)->delete();
-        DailyReportIncome::where('daily_report_id', $report->id)->delete();
 
         // Staff
         if ($request->employee_id) {
@@ -727,92 +723,19 @@ class DailyReportController extends Controller
 
         $this->saveFeedGrid($report, $request, $feedsById, $feedConsumption);
 
-        // Pregnancy
-        if ($request->pregnancy_buffalo_id) {
-            foreach ($request->pregnancy_buffalo_id as $key => $buffaloId) {
+        $this->saveHealthRecords($report, $request);
+        $this->saveVaccinationRecords($report, $request);
+        $this->savePregnancyActivities($report, $request);
 
-                if (!$buffaloId) {
-                    continue;
-                }
+        $this->saveDailyExpenses($report, $request);
 
-                DailyReportPregnancy::create([
-                    'daily_report_id' => $report->id,
-                    'buffalo_id'      => $buffaloId,
-                    'checkup_date'    => $request->pregnant_date[$key] ?? null,
-                    'status'          => 'pregnant',
-                    'remarks'         => null,
-                ]);
-            }
-        }
+        $this->milkFlowService->saveForReport(
+            $report,
+            $request,
+            $this->milkAnimalsForGrid()
+        );
 
-        // Health
-        if ($request->health_buffalo_id) {
-            foreach ($request->health_buffalo_id as $key => $buffaloId) {
-
-                if (!$buffaloId) continue;
-
-                DailyReportHealth::create([
-                    'daily_report_id' => $report->id,
-                    'buffalo_id'      => $buffaloId,
-                    'health_issue'    => $request->health_issue[$key] ?? '',
-                    'treatment'       => $request->treatment[$key] ?? '',
-                    'medicine_cost'   => $request->medicine_cost[$key] ?? 0,
-                ]);
-            }
-        }
-
-        // Vaccination
-        if ($request->vaccination_buffalo_id) {
-            foreach ($request->vaccination_buffalo_id as $key => $buffaloId) {
-                if (!$buffaloId) {
-                    continue;
-                }
-
-                DailyReportVaccination::create([
-                    'daily_report_id'  => $report->id,
-                    'buffalo_id'       => $buffaloId,
-                    'vaccine_name'     => $request->vaccine_name[$key] ?? '',
-                    'vaccination_date' => $request->vaccination_date[$key] ?? null,
-                    'remarks'          => $request->vaccination_remarks[$key] ?? '',
-                ]);
-            }
-        }
-
-        // Expense
-        if ($request->expense_title) {
-
-            foreach ($request->expense_title as $key => $title) {
-
-                if (!$title) {
-                    continue;
-                }
-
-                DailyReportExpense::create([
-                    'daily_report_id' => $report->id,
-                    'title'           => $title,
-                    'amount'          => $request->expense_amount[$key] ?? 0,
-                    'remarks'         => $request->expense_remarks[$key] ?? '',
-                ]);
-            }
-        }
-
-        // Income
-        if ($request->income_title) {
-
-            foreach ($request->income_title as $key => $title) {
-
-                if (!$title) {
-                    continue;
-                }
-
-                DailyReportIncome::create([
-                    'daily_report_id' => $report->id,
-                    'title'           => $title,
-                    'amount'          => $request->income_amount[$key] ?? 0,
-                    'remarks'         => $request->income_remarks[$key] ?? '',
-                ]);
-            }
-        }
+        $this->incomeService->saveForReport($report, $request);
 
         $this->syncService->syncAll($report->fresh());
 
@@ -820,7 +743,8 @@ class DailyReportController extends Controller
 
         return redirect()
             ->route('daily-reports.index')
-            ->with('success', 'Report Updated Successfully');
+            ->with('success', '✅ Report Saved Successfully · Draft Cleared')
+            ->with('clear_daily_report_draft', true);
     }
 
     public function print(DailyReport $dailyReport)
@@ -835,11 +759,143 @@ class DailyReportController extends Controller
     {
         $report = DailyReport::findOrFail($id);
         FeedStockService::restoreDailyReport($report->id);
+        $this->incomeService->purgeForReport($report);
         $this->syncService->purgeSynced($report->id);
+        $this->milkFlowService->purgeForReport($report);
         $report->delete();
 
         return redirect()
             ->route('daily-reports.index')
             ->with('success', 'Report Deleted Successfully');
+    }
+
+    private function saveHealthRecords(DailyReport $report, Request $request): void
+    {
+        if ($request->input('has_health') !== 'yes' || !$request->health_buffalo_id) {
+            return;
+        }
+
+        foreach ($request->health_buffalo_id as $key => $buffaloId) {
+            if (!$buffaloId) {
+                continue;
+            }
+
+            DailyReportHealth::create([
+                'daily_report_id' => $report->id,
+                'buffalo_id'      => $buffaloId,
+                'health_issue'    => $request->health_issue[$key] ?? '',
+                'treatment'       => $request->treatment[$key] ?? '',
+                'medicine_cost'   => $request->medicine_cost[$key] ?? 0,
+            ]);
+        }
+    }
+
+    private function saveVaccinationRecords(DailyReport $report, Request $request): void
+    {
+        if ($request->input('has_vaccination') !== 'yes' || !$request->vaccination_buffalo_id) {
+            return;
+        }
+
+        foreach ($request->vaccination_buffalo_id as $key => $buffaloId) {
+            if (!$buffaloId) {
+                continue;
+            }
+
+            DailyReportVaccination::create([
+                'daily_report_id'  => $report->id,
+                'buffalo_id'       => $buffaloId,
+                'vaccine_name'     => $request->vaccine_name[$key] ?? '',
+                'vaccination_date' => $request->vaccination_date[$key] ?? null,
+                'remarks'          => $request->vaccination_remarks[$key] ?? '',
+            ]);
+        }
+    }
+
+    private function savePregnancyActivities(DailyReport $report, Request $request): void
+    {
+        $activities = $request->input('pregnancy_activities', []);
+        if (!is_array($activities) || $activities === []) {
+            return;
+        }
+
+        if (in_array('heat', $activities, true) && $request->heat_buffalo_id) {
+            foreach ($request->heat_buffalo_id as $key => $buffaloId) {
+                if (!$buffaloId) {
+                    continue;
+                }
+                Buffalo::where('id', $buffaloId)->update([
+                    'heat_date' => $request->heat_date[$key] ?? $request->report_date,
+                ]);
+            }
+        }
+
+        if (in_array('ai', $activities, true) && $request->ai_buffalo_id) {
+            foreach ($request->ai_buffalo_id as $key => $buffaloId) {
+                if (!$buffaloId) {
+                    continue;
+                }
+                Buffalo::where('id', $buffaloId)->update([
+                    'ai_date' => $request->ai_date[$key] ?? $request->report_date,
+                ]);
+            }
+        }
+
+        if (in_array('pregcheck', $activities, true) && $request->pregcheck_buffalo_id) {
+            foreach ($request->pregcheck_buffalo_id as $key => $buffaloId) {
+                if (!$buffaloId) {
+                    continue;
+                }
+                $checkDate = $request->pregcheck_date[$key] ?? $request->report_date;
+                Buffalo::where('id', $buffaloId)->update([
+                    'pregnancy_check_date' => $checkDate,
+                    'lactation_status'     => 'pregnant',
+                ]);
+                DailyReportPregnancy::create([
+                    'daily_report_id' => $report->id,
+                    'buffalo_id'      => $buffaloId,
+                    'checkup_date'    => $checkDate,
+                    'status'          => 'pregnant',
+                    'remarks'         => $request->pregcheck_note[$key] ?? null,
+                ]);
+            }
+        }
+
+        if (in_array('delivery', $activities, true) && $request->delivery_buffalo_id) {
+            foreach ($request->delivery_buffalo_id as $key => $buffaloId) {
+                if (!$buffaloId) {
+                    continue;
+                }
+                Buffalo::where('id', $buffaloId)->update([
+                    'expected_delivery_date' => $request->delivery_date[$key] ?? null,
+                    'lactation_status'       => 'lactating',
+                ]);
+            }
+        }
+    }
+
+    private function saveDailyExpenses(DailyReport $report, Request $request): void
+    {
+        $types = $request->input('expense_type', []);
+        $amounts = $request->input('expense_amount', []);
+        $remarks = $request->input('expense_remarks', []);
+
+        foreach ($types as $key => $type) {
+            if (!$type) {
+                continue;
+            }
+
+            $amount = (float) ($amounts[$key] ?? 0);
+            if ($amount <= 0) {
+                continue;
+            }
+
+            DailyReportExpense::create([
+                'daily_report_id' => $report->id,
+                'expense_type'    => $type,
+                'title'           => DailyExpenseType::label($type),
+                'amount'          => $amount,
+                'remarks'         => $remarks[$key] ?? '',
+            ]);
+        }
     }
 }

@@ -4,9 +4,9 @@ return [
 
     'title' => 'भैंस',
 
-    'all_buffaloes' => 'सभी भैंसें',
-    'new_buffalo' => 'नई भैंस',
-    'add_buffalo' => 'नई भैंस जोड़ें',
+    'all_buffaloes' => 'सभी पशु',
+    'new_buffalo' => 'नया पशु',
+    'add_buffalo' => 'नया पशु जोड़ें',
     'edit_buffalo' => 'भैंस संपादित करें',
     'view_buffalo' => 'भैंस विवरण',
 

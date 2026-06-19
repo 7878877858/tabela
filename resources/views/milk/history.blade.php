@@ -36,10 +36,15 @@
 </x-form-card>
 
 <x-form-card :title="__('milk.milk_history')" icon="📋" :flush="true">
+    <x-erp-listing :per-page="25" id="milk-history" :search="false" :total-meta="count($daily) . ' total'">
+        <x-slot:toolbar>
+            <input type="search" id="milkHistorySearch" class="form-control form-control-sm" placeholder="{{ __('common.search_placeholder') }}" autocomplete="off">
+        </x-slot:toolbar>
     <x-responsive-table>
-        <table class="ds-table">
+        <table class="ds-table" id="milkHistoryTable">
             <thead>
                 <tr>
+                    <th class="erp-listing__sr-col">{{ __('common.sr_no') }}</th>
                     <th>{{ __('milk.date') }}</th>
                     <th>{{ __('milk.morning') }} (L)</th>
                     <th>{{ __('milk.evening') }} (L)</th>
@@ -49,6 +54,7 @@
             <tbody>
                 @forelse($daily as $row)
                 <tr>
+                    <td>0</td>
                     <td>{{ $row->entry_date }}</td>
                     <td>{{ number_format($row->morning,1) }}</td>
                     <td>{{ number_format($row->evening,1) }}</td>
@@ -58,7 +64,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" style="text-align:center; padding:30px; color:#9ca3af;">
+                    <td colspan="5" style="text-align:center; padding:30px; color:#9ca3af;">
                         {{ __('milk.no_data') }}
                     </td>
                 </tr>
@@ -66,6 +72,21 @@
             </tbody>
         </table>
     </x-responsive-table>
+    </x-erp-listing>
 </x-form-card>
 
 @endsection
+
+@push('scripts')
+<script src="{{ asset('static/js/erp-listing-grid.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    ErpListingGrid.initStaticTable({
+        tableId: 'milkHistoryTable',
+        listingId: 'milk-history',
+        searchInputId: 'milkHistorySearch',
+        labels: { noRecords: @json(__('milk.no_data')) },
+    });
+});
+</script>
+@endpush

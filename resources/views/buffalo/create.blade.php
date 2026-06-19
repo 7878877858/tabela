@@ -33,7 +33,7 @@
 
 <form class="buffalo-layout" method="POST" action="{{ isset($buffalo) ? route('buffalo.update',$buffalo) : route('buffalo.store') }}">
 
-    <x-form-card :title="__('buffalo.new_buffalo')" icon="🐃">
+    <x-form-card :title="isset($buffalo) ? __('buffalo.edit_buffalo') : __('buffalo.new_buffalo')" icon="🐃">
 
         @csrf
         @if(isset($buffalo)) @method('PUT') @endif

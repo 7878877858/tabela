@@ -2,173 +2,317 @@
 @section('title', __('dashboard.title'))
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('assets/css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ asset('static/css/dashboard.css') }}">
 
-<div class="erp-dashboard">
+@php
+    $currency = $settings['currency'];
+    $score = $healthScore['score'];
+    $scoreGrade = $healthScore['grade'];
+    $scoreLabel = match($scoreGrade) {
+        'excellent' => __('dashboard.score_excellent'),
+        'good' => __('dashboard.score_good'),
+        'fair' => __('dashboard.score_fair'),
+        default => __('dashboard.score_critical'),
+    };
+    $scoreColor = match(true) {
+        $score >= 85 => '#16a34a',
+        $score >= 70 => '#2563eb',
+        $score >= 50 => '#d97706',
+        default => '#dc2626',
+    };
+    $animalLabels = [
+        __('dashboard.buffalo'),
+        __('dashboard.cow'),
+        __('dashboard.buffalo_calf'),
+        __('dashboard.cow_calf'),
+    ];
+    $animalData = [
+        $animalTypeCounts['buffalo'] ?? 0,
+        $animalTypeCounts['cow'] ?? 0,
+        $animalTypeCounts['buffalo_calf'] ?? 0,
+        $animalTypeCounts['cow_calf'] ?? 0,
+    ];
+@endphp
 
-    @if(!$todayMilkEntered)
-    <div class="alert alert-error erp-dashboard__alert">
-        ⚠️ આજનો દૂધ ડેટા બાકી છે — <a href="{{ route('daily-reports.create') }}"><strong>દૈનિક અહેવાલ દાખલ કરો</strong></a>
-    </div>
-    @endif
+<div class="farm-dash">
 
-    {{-- Welcome header --}}
-    <header class="erp-dashboard__hero erp-dashboard__section erp-dashboard__section--hero">
-        <h1 class="erp-dashboard__hero-title">👋 Welcome, {{ $userName }}</h1>
-        <p class="erp-dashboard__hero-date">Today: {{ now()->format('d F Y') }}</p>
-        <div class="erp-dashboard__hero-stats">
-            <span class="erp-dashboard__hero-stat">🥛 Milk Produced Today: <strong>{{ number_format($todayMilk, 1) }} L</strong></span>
-            <span class="erp-dashboard__hero-stat">🐄 Current Animals: <strong>{{ $totalBuffaloes }}</strong></span>
-            <span class="erp-dashboard__hero-stat">🥛 {{ __('dashboard.lactating') }}: <strong>{{ $lactatingCount }}</strong></span>
+    {{-- Top bar: greeting + health score --}}
+    <header class="farm-dash__top">
+        <div class="farm-dash__intro">
+            <p class="farm-dash__eyebrow">{{ $settings['farm_name'] }} · {{ __('dashboard.farm_overview') }}</p>
+            <h1 class="farm-dash__title">👋 {{ __('dashboard.welcome') }}, {{ $userName }}</h1>
+            <p class="farm-dash__date">{{ __('dashboard.today_date') }}: {{ now()->translatedFormat('d F Y') }}</p>
+        </div>
+
+        <div class="farm-dash__score-card" style="--score-color: {{ $scoreColor }}">
+            <div class="farm-dash__score-ring" aria-hidden="true">
+                <svg viewBox="0 0 120 120">
+                    <circle class="farm-dash__score-track" cx="60" cy="60" r="52"/>
+                    <circle class="farm-dash__score-fill" cx="60" cy="60" r="52"
+                            style="stroke-dasharray: {{ 2 * 3.14159 * 52 }}; stroke-dashoffset: {{ 2 * 3.14159 * 52 * (1 - $score / 100) }}"/>
+                </svg>
+                <span class="farm-dash__score-num">{{ $score }}</span>
+            </div>
+            <div class="farm-dash__score-meta">
+                <strong>{{ __('dashboard.farm_health_score') }}</strong>
+                <span class="farm-dash__score-grade">{{ $scoreLabel }}</span>
+                @if($healthScore['issues'] > 0)
+                <small>{{ __('dashboard.score_issues', ['count' => $healthScore['issues']]) }}</small>
+                @endif
+            </div>
         </div>
     </header>
 
-    {{-- Primary KPIs --}}
-    <div class="erp-kpi-grid erp-kpi-grid--5 erp-dashboard__section erp-dashboard__section--primary">
-        <x-dashboard-kpi icon="🐃" accent="blue" :value="$totalBuffaloes" :label="__('dashboard.total_buffaloes')" :sub="$animalTypeSummary" />
-        <x-dashboard-kpi icon="🐄" accent="cow" :value="$animalTypeCounts['cow'] ?? 0" label="Cows" :sub="'ભેંસ બચ્ચું ' . ($animalTypeCounts['buffalo_calf'] ?? 0)" />
-        <x-dashboard-kpi icon="🥛" accent="purple" :value="number_format($todayMilk, 1) . ' L'" :label="__('dashboard.today_milk')" :sub="now()->format('d/m/Y')" />
-        <x-dashboard-kpi icon="💰" accent="green" :value="$settings['currency'] . number_format($monthIncome, 0)" :label="__('dashboard.month_income')" :sub="__('dashboard.this_month')" />
-        <x-dashboard-kpi icon="💸" accent="red" :value="$settings['currency'] . number_format($monthExpense, 0)" :label="__('dashboard.month_expense')" :sub="__('dashboard.this_month')" />
-    </div>
-
-    {{-- Quick actions (high priority on mobile) --}}
-    <div class="erp-panel erp-dashboard__section erp-dashboard__section--actions">
-        <h2 class="erp-panel__title">⚡ {{ __('dashboard.quick_action') }}</h2>
-        <p class="erp-panel__subtitle">Frequently used farm operations</p>
-        <div class="erp-actions-grid">
-            <a href="{{ route('daily-reports.create') }}" class="erp-action-tile">
-                <span class="erp-action-tile__icon">➕</span>
-                <span>Daily Report</span>
-            </a>
-            <a href="{{ route('sale.index') }}" class="erp-action-tile">
-                <span class="erp-action-tile__icon">🥛</span>
-                <span>Milk Sale</span>
-            </a>
-            <a href="{{ route('income.index') }}" class="erp-action-tile">
-                <span class="erp-action-tile__icon">💰</span>
-                <span>Income</span>
-            </a>
-            <a href="{{ route('kharch.index') }}" class="erp-action-tile">
-                <span class="erp-action-tile__icon">💸</span>
-                <span>Expense</span>
-            </a>
-            <a href="{{ route('reports.monthly') }}" class="erp-action-tile">
-                <span class="erp-action-tile__icon">📊</span>
-                <span>Monthly Report</span>
-            </a>
-            <a href="{{ route('reports.yearly') }}" class="erp-action-tile">
-                <span class="erp-action-tile__icon">📅</span>
-                <span>Yearly Report</span>
-            </a>
+    {{-- 1. Live Farm Status --}}
+    <section class="farm-dash__panel farm-dash__live">
+        <h2 class="farm-dash__panel-title">📡 {{ __('dashboard.live_farm_status') }}</h2>
+        <div class="farm-dash__live-grid">
+            <div class="farm-dash__live-item farm-dash__live-item--milk">
+                <span class="farm-dash__live-val">{{ number_format($todayMilk, 1) }} L</span>
+                <span class="farm-dash__live-lbl">{{ __('dashboard.today_milk') }}</span>
+            </div>
+            <div class="farm-dash__live-item farm-dash__live-item--stock">
+                <span class="farm-dash__live-val">{{ number_format($milkStock, 1) }} L</span>
+                <span class="farm-dash__live-lbl">{{ __('dashboard.milk_stock') }}</span>
+            </div>
+            <div class="farm-dash__live-item farm-dash__live-item--animals">
+                <span class="farm-dash__live-val">{{ $totalAnimals }}</span>
+                <span class="farm-dash__live-lbl">{{ __('dashboard.active_animals') }}</span>
+            </div>
+            <div class="farm-dash__live-item farm-dash__live-item--lactating">
+                <span class="farm-dash__live-val">{{ $lactatingCount }}</span>
+                <span class="farm-dash__live-lbl">{{ __('dashboard.lactating') }}</span>
+            </div>
+            <div class="farm-dash__live-item farm-dash__live-item--sales">
+                <span class="farm-dash__live-val">{{ number_format($todaySoldLiters, 1) }} L</span>
+                <span class="farm-dash__live-lbl">{{ __('dashboard.today_sales') }} · {{ $currency }}{{ number_format($todaySalesAmount, 0) }}</span>
+            </div>
+            <div class="farm-dash__live-item farm-dash__live-item--{{ $netOperational >= 0 ? 'profit' : 'loss' }}">
+                <span class="farm-dash__live-val">{{ $currency }}{{ number_format(abs($netOperational), 0) }}</span>
+                <span class="farm-dash__live-lbl">{{ __('dashboard.month_net') }} · {{ $netOperational >= 0 ? __('dashboard.profit') : __('dashboard.loss') }}</span>
+            </div>
         </div>
-    </div>
+    </section>
 
-    {{-- Secondary KPIs --}}
-    <div class="erp-kpi-grid erp-kpi-grid--4 erp-dashboard__section erp-dashboard__section--secondary">
-        <x-dashboard-kpi icon="📅" accent="purple" :value="number_format($monthMilk, 1) . ' L'" :label="__('dashboard.month_milk')" :sub="now()->format('F Y')" />
-        <x-dashboard-kpi
-            :icon="$netProfit >= 0 ? '📈' : '📉'"
-            :accent="$netProfit >= 0 ? 'green' : 'red'"
-            :value="$settings['currency'] . number_format(abs($netProfit), 0)"
-            :label="$netProfit >= 0 ? __('dashboard.profit') : __('dashboard.loss')"
-            :sub="__('dashboard.this_month')"
-        />
-        <x-dashboard-kpi icon="🤰" accent="orange" :value="$pregnantCount" label="Pregnant Animals" :sub="$deliveryThisWeek . ' due this week'" />
-        <x-dashboard-kpi icon="🫙" accent="teal" :value="number_format($remainingMilk, 1) . ' L'" label="Remaining Milk" sub="Today's stock" />
-    </div>
+    {{-- Farm accounting snapshot --}}
+    <section class="farm-dash__panel">
+        <h2 class="farm-dash__panel-title">📊 {{ __('farm.financial_summary') }}</h2>
+        <div class="ds-stats-grid ds-stats-grid-3">
+            <x-stat-card variant="plain" icon="💰" :label="__('farm.today_expenses')" :value="$settings['currency'] . number_format($financialToday['today_expenses'], 0)" />
+            <x-stat-card variant="plain" icon="🌾" :label="__('farm.month_feed_purchase')" :value="$settings['currency'] . number_format($financialToday['month_feed_purchase'], 0)" />
+            <x-stat-card variant="plain" icon="💡" :label="__('farm.month_utility')" :value="$settings['currency'] . number_format($financialToday['month_utility'], 0)" />
+            <x-stat-card variant="plain" icon="🛡️" :label="__('farm.month_insurance')" :value="$settings['currency'] . number_format($financialToday['month_insurance'], 0)" />
+            <x-stat-card variant="plain" icon="🏦" :label="__('farm.month_loan_emi')" :value="$settings['currency'] . number_format($financialToday['month_loan_emi'], 0)" />
+            <x-stat-card variant="plain" icon="🐃" :label="__('farm.month_animal_purchase')" :value="$settings['currency'] . number_format($financialToday['month_animal_purchase'], 0)" />
+            <x-stat-card variant="plain" icon="💵" :label="__('farm.month_animal_sale')" :value="$settings['currency'] . number_format($financialToday['month_animal_sale'], 0)" />
+            <x-stat-card variant="plain" icon="🔧" :label="__('farm.month_asset_purchase')" :value="$settings['currency'] . number_format($financialToday['month_asset_purchase'], 0)" />
+        </div>
+        <p class="mt-2 mb-0"><a href="{{ route('reports.financial-summary') }}" class="btn btn-outline btn-sm">📈 {{ __('farm.report_financial_summary') }}</a></p>
+    </section>
 
-    {{-- Charts --}}
-    <div class="erp-chart-grid erp-dashboard__section erp-dashboard__section--charts">
-        <div class="erp-panel">
-            <h2 class="erp-panel__title">{{ __('dashboard.last_7_days_milk') }}</h2>
-            <p class="erp-panel__subtitle">Milk trend for recent week</p>
-            <div class="erp-panel__chart-wrap" id="milkChartWrap">
+    {{-- Milk flow: production → distribution → dairy --}}
+    <section class="farm-dash__panel">
+        <h2 class="farm-dash__panel-title">🥛 {{ __('milk_flow.today_summary') }}</h2>
+        <div class="ds-stats-grid ds-stats-grid-3" style="margin-bottom:12px;">
+            <x-stat-card variant="plain" icon="🐃" :label="__('milk_flow.buffalo') . ' ' . __('milk_flow.production')" :value="number_format($milkFlow['production']['buffalo'], 1) . ' L'" />
+            <x-stat-card variant="plain" icon="🐄" :label="__('milk_flow.cow') . ' ' . __('milk_flow.production')" :value="number_format($milkFlow['production']['cow'], 1) . ' L'" />
+            <x-stat-card variant="plain" icon="🥛" :label="__('milk_flow.total_production')" :value="number_format($milkFlow['production']['total'], 1) . ' L'" />
+        </div>
+        <div class="ds-stats-grid ds-stats-grid-3">
+            <x-stat-card variant="plain" icon="🏠" :label="__('milk_flow.customer_distribution')" :value="number_format($milkFlow['distribution']['total'], 1) . ' L'" />
+            <x-stat-card variant="plain" icon="🏭" :label="__('milk_flow.dairy_collection_liters')" :value="number_format($milkFlow['dairy']['total_liter'], 1) . ' L'" />
+            <x-stat-card variant="plain" icon="💰" :label="__('milk_flow.total_milk_income')" :value="$currency . number_format($milkFlow['total_income'], 0)" />
+        </div>
+        <div class="ds-stats-grid ds-stats-grid-2" style="margin-top:12px;">
+            <x-stat-card variant="plain" icon="👥" :label="__('milk_flow.customer_income')" :value="$currency . number_format($milkFlow['customer_income'], 0)" />
+            <x-stat-card variant="plain" icon="🏭" :label="__('milk_flow.dairy_income')" :value="$currency . number_format($milkFlow['dairy_income'], 0)" />
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+            <a href="{{ route('milk-distribution.index') }}" class="btn btn-outline btn-sm">🥛 {{ __('milk_flow.milk_distribution') }}</a>
+            <a href="{{ route('dairy-collections.index') }}" class="btn btn-outline btn-sm">🏭 {{ __('milk_flow.dairy_collection') }}</a>
+            <a href="{{ route('reports.milk-reconciliation') }}" class="btn btn-ghost btn-sm">📋 {{ __('milk_flow.report_reconciliation') }}</a>
+        </div>
+    </section>
+
+    {{-- Farm income summary (month) --}}
+    <section class="farm-dash__panel">
+        <h2 class="farm-dash__panel-title">💰 {{ __('income.financial_summary') }} — {{ now()->locale('gu')->translatedFormat('F Y') }}</h2>
+        <div class="ds-stats-grid ds-stats-grid-3">
+            <x-stat-card variant="plain" icon="🥛" :label="__('income.customer_milk_income')" :value="$currency . number_format($incomeSummary['customer_milk'], 0)" />
+            <x-stat-card variant="plain" icon="🏭" :label="__('income.dairy_income')" :value="$currency . number_format($incomeSummary['dairy'], 0)" />
+            <x-stat-card variant="plain" icon="💩" :label="__('income.manure_sale')" :value="$currency . number_format($incomeSummary['manure'], 0)" />
+            <x-stat-card variant="plain" icon="🐃" :label="__('income.animal_sale')" :value="$currency . number_format($incomeSummary['animal_sale'], 0)" />
+            <x-stat-card variant="plain" icon="📦" :label="__('income.other_income')" :value="$currency . number_format($incomeSummary['other'], 0)" />
+            <x-stat-card variant="plain" icon="💰" :label="__('income.total_income')" :value="$currency . number_format($incomeSummary['total'], 0)" />
+        </div>
+        <div class="farm-dash__panel-actions" style="margin-top:12px;">
+            <a href="{{ route('income.index') }}" class="btn btn-outline btn-sm">📈 {{ __('income.income_hub') }}</a>
+            <a href="{{ route('reports.income-summary') }}" class="btn btn-ghost btn-sm">📊 {{ __('income.summary_report') }}</a>
+        </div>
+    </section>
+
+    {{-- 2. Farm Health Overview --}}
+    <section class="farm-dash__panel farm-dash__health-strip">
+        <h2 class="farm-dash__panel-title">💚 {{ __('dashboard.farm_health_overview') }}</h2>
+        <div class="farm-dash__health-pills">
+            <div class="farm-dash__pill farm-dash__pill--purple">
+                <span class="farm-dash__pill-val">{{ $pregnantCount }}</span>
+                <span class="farm-dash__pill-lbl">{{ __('dashboard.pregnant') }}</span>
+            </div>
+            <div class="farm-dash__pill farm-dash__pill--pink">
+                <span class="farm-dash__pill-val">{{ $deliveryThisWeek }}</span>
+                <span class="farm-dash__pill-lbl">{{ __('dashboard.delivery_week') }}</span>
+            </div>
+            <div class="farm-dash__pill farm-dash__pill--orange">
+                <span class="farm-dash__pill-val">{{ $heatReminders }}</span>
+                <span class="farm-dash__pill-lbl">{{ __('dashboard.in_heat') }}</span>
+            </div>
+            <div class="farm-dash__pill farm-dash__pill--{{ $lowFeedStock->count() > 0 ? 'danger' : 'ok' }}">
+                <span class="farm-dash__pill-val">{{ $lowFeedStock->count() }}</span>
+                <span class="farm-dash__pill-lbl">{{ __('dashboard.low_feed') }}</span>
+            </div>
+            <div class="farm-dash__pill farm-dash__pill--{{ $pendingSalary > 0 ? 'warning' : 'ok' }}">
+                <span class="farm-dash__pill-val">{{ $pendingSalary > 0 ? $currency . number_format($pendingSalary, 0) : '—' }}</span>
+                <span class="farm-dash__pill-lbl">{{ __('dashboard.pending_salary') }}</span>
+            </div>
+            <div class="farm-dash__pill farm-dash__pill--{{ $upcomingAssetServices > 0 ? 'info' : 'ok' }}">
+                <span class="farm-dash__pill-val">{{ $upcomingAssetServices }}</span>
+                <span class="farm-dash__pill-lbl">{{ __('dashboard.asset_service') }}</span>
+            </div>
+        </div>
+    </section>
+
+    {{-- Charts row --}}
+    <div class="farm-dash__charts">
+        {{-- 3. Milk Production Chart --}}
+        <section class="farm-dash__panel farm-dash__chart-panel">
+            <h2 class="farm-dash__panel-title">📈 {{ __('dashboard.milk_production_chart') }}</h2>
+            <div class="farm-dash__chart-wrap">
                 @if($last7->sum('liters') > 0)
-                <canvas id="milkChart" height="180"></canvas>
+                <canvas id="milkChart" height="160"></canvas>
                 @else
-                <div class="erp-panel__empty">No milk records available for the last 7 days</div>
+                <p class="farm-dash__empty">{{ __('dashboard.no_milk_data') }}</p>
                 @endif
             </div>
-        </div>
-        <div class="erp-panel">
-            <h2 class="erp-panel__title">Animal Distribution</h2>
-            <p class="erp-panel__subtitle">Current animal population</p>
-            <div class="erp-panel__chart-wrap" id="animalChartWrap">
-                @if($totalBuffaloes > 0)
-                <canvas id="animalChart" height="180"></canvas>
+        </section>
+
+        {{-- 4. Animal Distribution Chart --}}
+        <section class="farm-dash__panel farm-dash__chart-panel">
+            <h2 class="farm-dash__panel-title">🐄 {{ __('dashboard.animal_distribution') }}</h2>
+            <div class="farm-dash__chart-wrap farm-dash__chart-wrap--donut">
+                @if($totalAnimals > 0)
+                <canvas id="animalChart" height="160"></canvas>
+                <div class="farm-dash__donut-center">
+                    <strong>{{ $totalAnimals }}</strong>
+                    <small>{{ __('dashboard.active_animals') }}</small>
+                </div>
                 @else
-                <div class="erp-panel__empty">No animals registered yet</div>
+                <p class="farm-dash__empty">{{ __('dashboard.no_animals') }}</p>
                 @endif
             </div>
-        </div>
+        </section>
     </div>
 
-    <div class="erp-panel erp-dashboard__section erp-dashboard__section--expense">
-        <h2 class="erp-panel__title">{{ __('dashboard.expense_by_type') }}</h2>
-        <p class="erp-panel__subtitle">Monthly expense breakdown</p>
-        <div class="erp-panel__chart-wrap" id="expenseChartWrap">
-            @if($expenseBreakdown->isNotEmpty())
-            <canvas id="expenseChart" height="180"></canvas>
+    {{-- Bottom row: alerts, top producers, quick actions --}}
+    <div class="farm-dash__bottom">
+
+        {{-- 5. Today's Alerts --}}
+        <section class="farm-dash__panel farm-dash__alerts">
+            <h2 class="farm-dash__panel-title">🔔 {{ __('dashboard.todays_alerts') }}</h2>
+            <ul class="farm-dash__alert-list">
+                @foreach($alerts as $alert)
+                <li class="farm-dash__alert farm-dash__alert--{{ $alert['level'] }}">
+                    <span class="farm-dash__alert-icon">{{ $alert['icon'] }}</span>
+                    @if($alert['route'])
+                    <a href="{{ $alert['route'] }}" class="farm-dash__alert-text">{{ $alert['message'] }}</a>
+                    @else
+                    <span class="farm-dash__alert-text">{{ $alert['message'] }}</span>
+                    @endif
+                </li>
+                @endforeach
+            </ul>
+        </section>
+
+        {{-- 6. Top Milk Producing Animals --}}
+        <section class="farm-dash__panel farm-dash__producers">
+            <h2 class="farm-dash__panel-title">🏆 {{ __('dashboard.top_milk_animals') }}</h2>
+            <p class="farm-dash__panel-sub">{{ __('dashboard.this_month') }} · {{ number_format($monthMilk, 1) }} L {{ __('dashboard.liters') }}</p>
+            @if($topProducers->isNotEmpty())
+            <ul class="farm-dash__producer-list">
+                @foreach($topProducers as $i => $b)
+                @php $pct = $maxProducerLiters > 0 ? round(($b['total'] / $maxProducerLiters) * 100) : 0; @endphp
+                <li class="farm-dash__producer">
+                    <span class="farm-dash__producer-rank">{{ $i + 1 }}</span>
+                    <div class="farm-dash__producer-body">
+                        <div class="farm-dash__producer-head">
+                            <strong>{{ $b['tag'] }}</strong>
+                            @if($b['name'] !== $b['tag'])<span class="farm-dash__producer-name">{{ $b['name'] }}</span>@endif
+                            <span class="farm-dash__producer-liters">{{ number_format($b['total'], 1) }} L</span>
+                        </div>
+                        <div class="farm-dash__producer-bar"><span style="width: {{ $pct }}%"></span></div>
+                    </div>
+                </li>
+                @endforeach
+            </ul>
             @else
-            <div class="erp-panel__empty">No expenses recorded this month</div>
+            <p class="farm-dash__empty">{{ __('dashboard.no_producers') }}</p>
             @endif
-        </div>
-    </div>
+        </section>
 
-    {{-- Top producers --}}
-    <div class="erp-panel erp-dashboard__section erp-dashboard__section--ranking">
-        <h2 class="erp-panel__title">🏆 {{ __('dashboard.top_milk_producers') }}</h2>
-        <p class="erp-panel__subtitle">Highest milk yield this month</p>
-        @if($topBuffaloes->isNotEmpty())
-        <ul class="erp-rank-list">
-            @foreach($topBuffaloes->values() as $i => $b)
-            @php
-                $medals = ['🥇', '🥈', '🥉'];
-                $medal = $medals[$i] ?? null;
-            @endphp
-            <li class="erp-rank-item">
-                <span class="erp-rank-item__medal">
-                    @if($medal){{ $medal }}@else<span class="erp-rank-item__num">#{{ $i + 1 }}</span>@endif
-                </span>
-                <span class="erp-rank-item__name">{{ $b['tag'] }}@if($b['name'] !== $b['tag']) — {{ $b['name'] }}@endif</span>
-                <span class="erp-rank-item__dots" aria-hidden="true"></span>
-                <span class="erp-rank-item__val">{{ number_format($b['total'], 1) }} L</span>
-            </li>
-            @endforeach
-        </ul>
-        @else
-        <div class="erp-panel__empty">No milk production data this month</div>
-        @endif
+        {{-- 7. Quick Actions --}}
+        <section class="farm-dash__panel farm-dash__actions">
+            <h2 class="farm-dash__panel-title">⚡ {{ __('dashboard.quick_actions') }}</h2>
+            <div class="farm-dash__action-grid">
+                <a href="{{ route('daily-reports.create') }}" class="farm-dash__action farm-dash__action--primary">
+                    <span>📋</span>{{ __('dashboard.action_daily_report') }}
+                </a>
+                <a href="{{ route('sale.index') }}" class="farm-dash__action">
+                    <span>🥛</span>{{ __('dashboard.action_milk_sale') }}
+                </a>
+                <a href="{{ route('expenses.index') }}" class="farm-dash__action">
+                    <span>💸</span>{{ __('farm.expenses_hub') }}
+                </a>
+                <a href="{{ route('income.index') }}" class="farm-dash__action">
+                    <span>💰</span>{{ __('dashboard.action_income') }}
+                </a>
+                <a href="{{ route('buffalo.index') }}" class="farm-dash__action">
+                    <span>🐃</span>{{ __('dashboard.action_animals') }}
+                </a>
+                <a href="{{ route('feeds.index') }}" class="farm-dash__action">
+                    <span>🌾</span>{{ __('dashboard.action_feeds') }}
+                </a>
+                <a href="{{ route('tasks.index') }}" class="farm-dash__action">
+                    <span>✅</span>{{ __('dashboard.action_tasks') }}
+                </a>
+                <a href="{{ route('reports.monthly') }}" class="farm-dash__action">
+                    <span>📊</span>{{ __('dashboard.action_monthly') }}
+                </a>
+            </div>
+        </section>
     </div>
-
-    {{-- Tertiary stats --}}
-    <div class="erp-kpi-grid erp-kpi-grid--3 erp-dashboard__section erp-dashboard__section--tertiary">
-        <x-dashboard-kpi icon="🥛" accent="purple" :value="$settings['currency'] . number_format($todaySalesAmount, 0)" label="Today's Sales" :sub="number_format($todaySoldLiters, 1) . ' L sold'" />
-        <x-dashboard-kpi icon="⏳" accent="amber" :value="$settings['currency'] . number_format($pendingSalary, 0)" :label="__('dashboard.pending_salary')" />
-        <x-dashboard-kpi icon="⚠️" accent="red" :value="$lowFeedStock->count()" label="Low Feed Stock" :sub="$heatReminders . ' in heat'" />
-    </div>
-
 </div>
 @endsection
 
 @push('scripts')
 <script>
 (function () {
-    const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#1D4ED8';
+    const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#1d4ed8';
 
     @if($last7->sum('liters') > 0)
     new Chart(document.getElementById('milkChart'), {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: {!! json_encode($last7->pluck('date')) !!},
             datasets: [{
-                label: 'Liters',
+                label: 'L',
                 data: {!! json_encode($last7->pluck('liters')) !!},
-                backgroundColor: 'rgba(139, 92, 246, 0.35)',
-                borderColor: '#8b5cf6',
+                borderColor: primary,
+                backgroundColor: primary + '22',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4,
+                pointBackgroundColor: primary,
                 borderWidth: 2,
-                borderRadius: 6,
             }]
         },
         options: {
@@ -176,62 +320,35 @@
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                x: { grid: { display: false } }
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 } } },
+                x: { grid: { display: false }, ticks: { font: { size: 11 } } }
             }
         }
     });
     @endif
 
-    @if($totalBuffaloes > 0)
+    @if($totalAnimals > 0)
     new Chart(document.getElementById('animalChart'), {
         type: 'doughnut',
         data: {
-            labels: ['ભેંસ', 'ગાય', 'ભેંસ બચ્ચું', 'ગાય બચ્ચું'],
+            labels: {!! json_encode($animalLabels) !!},
             datasets: [{
-                data: {!! json_encode([
-                    $animalTypeCounts['buffalo'] ?? 0,
-                    $animalTypeCounts['cow'] ?? 0,
-                    $animalTypeCounts['buffalo_calf'] ?? 0,
-                    $animalTypeCounts['cow_calf'] ?? 0,
-                ]) !!},
-                backgroundColor: ['#3b82f6', '#22c55e', '#60a5fa', '#4ade80'],
+                data: {!! json_encode($animalData) !!},
+                backgroundColor: ['#3b82f6', '#22c55e', '#93c5fd', '#86efac'],
                 borderWidth: 0,
+                spacing: 2,
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '68%',
             plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } }
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 11 }, padding: 10, boxWidth: 12 }
+                }
             }
-        }
-    });
-    @endif
-
-    @if($expenseBreakdown->isNotEmpty())
-    const expLabels = {!! json_encode($expenseBreakdown->map(fn($e) => match($e->category){
-        'feed' => __('dashboard.feed'),
-        'medicine' => __('dashboard.medicine'),
-        'labour' => __('dashboard.labour'),
-        'equipment' => __('dashboard.equipment'),
-        'veterinary' => __('dashboard.veterinary'),
-        default => __('dashboard.other')
-    })) !!};
-    new Chart(document.getElementById('expenseChart'), {
-        type: 'doughnut',
-        data: {
-            labels: expLabels,
-            datasets: [{
-                data: {!! json_encode($expenseBreakdown->pluck('total')) !!},
-                backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#3b82f6', '#8b5cf6', '#6b7280'],
-                borderWidth: 0,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } } }
         }
     });
     @endif

@@ -1,0 +1,53 @@
+/**
+ * ERP — searchable dropdown overflow & z-index (Tom Select, Select2).
+ */
+
+.select2-container {
+    width: 100% !important;
+}
+
+.select2-dropdown {
+    z-index: 99999 !important;
+}
+
+.select2-container--open {
+    z-index: 99998 !important;
+}
+
+/* Tom Select — dropdown appended to body */
+.ts-dropdown,
+body > .ts-dropdown {
+    z-index: 99999 !important;
+}
+
+.ts-wrapper.single.input-active,
+.ts-wrapper.multi.input-active {
+    z-index: auto;
+}
+
+.ts-wrapper {
+    width: 100%;
+}
+
+/* Prevent parent containers from clipping dropdown panels */
+.card,
+.card-body,
+.accordion-body,
+.tab-pane,
+.tab-content,
+.modal-body,
+.erp-panel,
+.ds-card__body,
+.form-card,
+.daily-report-page .dr-section-card,
+.daily-report-page .dr-collapsible-content,
+.daily-report-page .dr-section-content,
+.daily-report-page .dr-section-table-area {
+    overflow: visible !important;
+}
+
+/* Grid scroll areas keep horizontal scroll; vertical clipping removed for dropdown rows */
+.daily-report-page .dr-section-table-area {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
